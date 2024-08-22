@@ -17,7 +17,6 @@ class CustomMinMaxScaler:
 
         # If the scaler has not been defined yet, create and fit it on the filtered data
         if self._scaler is None:
-            print('FITTING')
             self._scaler = MinMaxScaler()
             self._scaler.fit(data_filtered)
 

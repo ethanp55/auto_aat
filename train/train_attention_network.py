@@ -20,9 +20,9 @@ from nltk.corpus import words
 TRAIN_PERCENTAGE = 0.7  # How much data to use for training
 VALIDATION_PERCENTAGE = 0.3  # How much of the training data to use for validation
 NETWORK_NAME = 'AATention'
-N_EPOCHS = 2
+N_EPOCHS = 500
 EARLY_STOP = int(N_EPOCHS * 0.2)
-BATCH_SIZE = 256
+BATCH_SIZE = 512
 optimizer = Adam()
 loss_fn = MeanSquaredError()
 val_metric = MeanSquaredErrorMetric()
@@ -207,12 +207,12 @@ with open(pred_vals_path, 'wb') as file1, open(true_vals_path, 'wb') as file2, o
 # Generate a plot of the training and validation loss over time
 assert len(training_losses) == len(validation_losses)
 x_vals = list(range(len(training_losses)))
+plt.grid()
 plt.plot(x_vals, training_losses, label='Losses')
 plt.plot(x_vals, validation_losses, color='red', label='Validation Losses')
-plt.title('Training and Validation Losses')
-plt.xlabel('Epoch')
-plt.ylabel('Loss')
-plt.legend(loc='upper right')
+plt.xlabel('Epoch', fontsize=16, fontweight='bold')
+plt.ylabel('Loss', fontsize=16, fontweight='bold')
+plt.legend(loc='upper right', fontsize=12)
 plt.savefig(f'../train/figures/{NETWORK_NAME}.png', bbox_inches='tight')
 plt.clf()
 

@@ -218,4 +218,4 @@ plt.clf()
 
 print(model.summary())
 
-# Test MSE = 0.09599700570106506
+# Test MSE = 0.106

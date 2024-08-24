@@ -1,16 +1,17 @@
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.layers import Dense, Embedding, LayerNormalization, MultiHeadAttention, Layer, TextVectorization, \
-    Dropout
+from tensorflow.keras.layers import Dense, Embedding, LayerNormalization, MultiHeadAttention, Layer, \
+    TextVectorization, Dropout
 from tensorflow.keras.models import Model
 from typing import Dict, List, Tuple
 
 
 # Layer that process the generator and environment/domain description(s)
 class _TextLayer(Layer):
-    def __init__(self, max_text_length: int, text_embedding_dim: int, vocab: List[str]) -> None:
+    def __init__(self, max_text_length: int, text_embedding_dim: int, vocab: List[str], dropout_rate: float) -> None:
         super(_TextLayer, self).__init__()
         self.max_text_length, self.text_embedding_dim, self.vocab = max_text_length, text_embedding_dim, vocab
+        self.dropout_rate = dropout_rate
 
     def build(self) -> None:
         vocab_size = len(self.vocab)
@@ -18,15 +19,18 @@ class _TextLayer(Layer):
                                                     output_sequence_length=self.max_text_length)
         self.g_text_embedding = Embedding(input_dim=vocab_size, output_dim=self.text_embedding_dim)
         self.e_text_embedding = Embedding(input_dim=vocab_size, output_dim=self.text_embedding_dim)
+        self.dropout_1 = Dropout(self.dropout_rate)
+        self.dropout_2 = Dropout(self.dropout_rate)
 
     def get_config(self) -> Dict:
         return {
             'max_text_length': self.max_text_length,
             'text_embedding_dim': self.text_embedding_dim,
-            'vocab': self.vocab
+            'vocab': self.vocab,
+            'dropout_rate': self.dropout_rate
         }
 
-    def call(self, g_text: np.array, e_text: np.array) -> Tuple[tf.Tensor, tf.Tensor]:
+    def call(self, g_text: np.array, e_text: np.array, training: bool) -> Tuple[tf.Tensor, tf.Tensor]:
         # Calculate positional encodings
         pos = np.arange(self.max_text_length)[:, np.newaxis]
         i = np.arange(self.text_embedding_dim)[np.newaxis, :]
@@ -45,7 +49,7 @@ class _TextLayer(Layer):
         e_text_embedded = self.e_text_embedding(e_text_tokenized)
 
         # Add the embedded vectors with the positional encodings, return
-        return g_text_embedded + pos_encoding, e_text_embedded + pos_encoding
+        return self.dropout_1(g_text_embedded + pos_encoding, training=training), self.dropout_2(e_text_embedded + pos_encoding, training=training)
 
 
 # Layer that process the state vector(s)
@@ -58,9 +62,11 @@ class _StateLayer(Layer):
         self.dropout_rate = dropout_rate
 
     def build(self) -> None:
-        self.dense = Dense(self.state_output_dim, activation='relu')
+        self.dense_1 = Dense(self.state_output_dim, activation='relu')
+        self.dense_2 = Dense(self.state_output_dim, activation='relu')
         self.self_attention = MultiHeadAttention(num_heads=4, key_dim=self.state_output_dim)
-        self.norm = LayerNormalization()
+        self.norm_1 = LayerNormalization()
+        self.norm_2 = LayerNormalization()
         self.dropout = Dropout(self.dropout_rate)
 
     def get_config(self) -> Dict:
@@ -77,7 +83,7 @@ class _StateLayer(Layer):
         state_masked = state * mask
 
         # Transform the masked states
-        x = self.dense(state_masked)
+        x = self.dense_1(state_masked)
 
         # If we are using positional encodings for the state (to see where each feature is located), add them to x
         if self.use_pos_encodings:
@@ -94,12 +100,18 @@ class _StateLayer(Layer):
         x = tf.reshape(x, [x.shape[0], -1, 1])
         att = self.self_attention(x, x)
 
-        # Drop out and residual connection
+        # Drop out, residual connection, normalize
         att = self.dropout(att, training=training)
         x = x + att
+        x = tf.squeeze(self.norm_1(x))
+
+        # Final dense layer, residual connection
+        final_dense = self.dense_2(x)
+        x = x + final_dense
+        x = tf.reshape(x, [x.shape[0], -1, 1])
 
         # Normalize and return
-        return self.norm(x)
+        return self.norm_2(x)
 
 
 # Layer that performs cross attention with process state vector(s) and the generator and environment description vectors
@@ -159,7 +171,7 @@ class AATention(Model):
         self.dropout_rate = dropout_rate
 
     def build(self) -> None:
-        self.text_layer = _TextLayer(self.max_text_length, self.text_embedding_dim, self.vocab)
+        self.text_layer = _TextLayer(self.max_text_length, self.text_embedding_dim, self.vocab, self.dropout_rate)
         self.state_layer = _StateLayer(self.mask_value, self.state_output_dim, self.use_pos_encodings,
                                        self.dropout_rate)
         self.cross_attention_layer = _CrossAttentionLayer(self.key_dim, self.dropout_rate)
@@ -188,7 +200,7 @@ class AATention(Model):
     def call(self, g_text: np.array, e_text: np.array, state: np.array, n_assumptions: np.array,
              training: bool = False) -> tf.Tensor:
         # Process the generator and environment/domain descriptions
-        g_text_embeddings, e_text_embeddings = self.text_layer(g_text, e_text)
+        g_text_embeddings, e_text_embeddings = self.text_layer(g_text, e_text, training=training)
 
         # Process the state vector(s)
         state_attention = self.state_layer(state, training=training)
@@ -215,7 +227,3 @@ class AATention(Model):
 
         # Pass through the output layer, which uses a sigmoid activation function (to force values between 0 and 1)
         return self.output_layer(x)
-
-
-
-

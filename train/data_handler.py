@@ -5,8 +5,7 @@ from utils.utils import PAD_VAL
 
 def _get_n_generators(domain: str) -> int:
     if domain == 'jhg':
-        # return 16
-        return 1
+        return 16
 
     return 1
 

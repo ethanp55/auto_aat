@@ -1,6 +1,6 @@
 from collections import Counter
 import matplotlib.pyplot as plt
-from networks.attention import ATTention
+from networks.attention import AATention
 import nltk
 import numpy as np
 import pickle
@@ -19,10 +19,10 @@ from nltk.corpus import words
 # Parameters and items needed for training and testing
 TRAIN_PERCENTAGE = 0.7  # How much data to use for training
 VALIDATION_PERCENTAGE = 0.3  # How much of the training data to use for validation
-NETWORK_NAME = 'ATTention'
+NETWORK_NAME = 'AATention'
 N_EPOCHS = 500
 EARLY_STOP = int(N_EPOCHS * 0.1)
-BATCH_SIZE = 1056
+BATCH_SIZE = 512
 optimizer = Adam()
 loss_fn = MeanSquaredError()
 val_metric = MeanSquaredErrorMetric()
@@ -83,7 +83,7 @@ freq_dist = Counter(vocab)
 vocab = [word for word, _ in freq_dist.most_common(5000 - 16)]
 vocab += ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen',
           'fourteen', 'fifteen', 'sixteen']
-model = ATTention(key_dim=128, max_text_length=100, text_embedding_dim=64, vocab=vocab,
+model = AATention(key_dim=128, max_text_length=100, text_embedding_dim=64, vocab=vocab,
                   mask_value=PAD_VAL, state_output_dim=128, use_pos_encodings=True, dense_dim=128, dropout_rate=0.1)
 
 # Lists to monitor training and validation losses over time - used to generate a plot at the end of this file
@@ -236,5 +236,5 @@ plt.clf()
 
 print(model.summary())
 
-# 18522
+# Test MSE = 0.02769026719033718
 # 1,184,877 params

@@ -164,11 +164,11 @@ class CrossAttentionLayer(Layer):
         return self.norm(state_att + state_att_with_g_text + state_att_with_e_text)
 
 
-class ATTention(Model):
+class AATention(Model):
     def __init__(self, key_dim: int, max_text_length: int, text_embedding_dim: int, vocab: List[str],
                  mask_value: float, state_output_dim: int, use_pos_encodings: bool, dense_dim: int,
                  dropout_rate: float) -> None:
-        super(ATTention, self).__init__()
+        super(AATention, self).__init__()
         self.key_dim = key_dim
         self.max_text_length = max_text_length
         self.text_embedding_dim = text_embedding_dim

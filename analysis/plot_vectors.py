@@ -6,7 +6,7 @@ from utils.utils import PAD_VAL
 
 
 # Network name
-NETWORK_NAME = 'ATTention'
+NETWORK_NAME = 'AATention'
 
 # Get data
 pred_vals_path = f'../analysis/test_data_results/{NETWORK_NAME}_test_pred_vals.pickle'

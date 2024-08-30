@@ -3,13 +3,14 @@ from simple_rl.mdp.markov_game.MarkovGameMDPClass import MarkovGameMDP
 from agents.folk_egal import FolkEgalAgent, FolkEgalPunishAgent
 from agents.minimax_q import MinimaxAgent
 from agents.cfr import CFRAgent
-from utils.utils import P1, P2
+from utils.utils import P1, P2, PAD_VAL, PRISONERS_E_DESCRIPTION, PRISONERS_G_DESCRIPTIONS, NETWORK_NAME
 import numpy as np
 from typing import Tuple, List
 import pickle
 from copy import deepcopy
 import random
 from sklearn.neighbors import KernelDensity
+from tensorflow.keras.models import load_model
 from collections import deque
 
 ESTIMATES_LOOKBACK = 25
@@ -353,7 +354,7 @@ def distance_func(x, y):
 
 
 class AlegAATr(Agent):
-    def __init__(self, name: str, game: MarkovGameMDP, player: int, baselines, use_nn=False, lmbda=0.99, n_simulations=10, lookback=3, log=False):
+    def __init__(self, name: str, game: MarkovGameMDP, player: int, baselines, use_nn=False, lmbda=0.95, n_simulations=10, lookback=3, log=False, use_auto_aat=False):
         Agent.__init__(self, name=name, actions=[])
         self.name = name
         self.game = deepcopy(game)
@@ -392,6 +393,13 @@ class AlegAATr(Agent):
             deque(maxlen=ESTIMATES_LOOKBACK), deque(maxlen=ESTIMATES_LOOKBACK), deque(maxlen=ESTIMATES_LOOKBACK), \
             deque(maxlen=ESTIMATES_LOOKBACK), deque(maxlen=ESTIMATES_LOOKBACK), deque(maxlen=ESTIMATES_LOOKBACK), \
             deque(maxlen=ESTIMATES_LOOKBACK)
+
+        self.use_auto_aat = use_auto_aat
+
+        if self.use_auto_aat:
+            self.assumption_pred_model = load_model(f'../networks/models/{NETWORK_NAME}.keras')
+            self.state_scaler = pickle.load(open(f'../networks/scalers/{NETWORK_NAME}_state_scaler.pickle', 'rb'))
+            assert self.state_scaler._scaler is not None
 
     def _get_best_self_play_expert(self, game: MarkovGameMDP):
         self.best_self_play_expert = None
@@ -447,7 +455,7 @@ class AlegAATr(Agent):
         scalers = {}
         training_datas = {}
 
-        data_dir = '../training/training_data/' + str(game) + '/'
+        data_dir = '../aat/training_data/' + str(game) + '/'
 
         for e_key in self.experts.keys():
             if self.use_nn:
@@ -484,17 +492,43 @@ class AlegAATr(Agent):
         return predictions, corrections, distances
 
     def update_expert(self, prev_rewards, prev_opp_rewards, round_num, proportion_payoff, proposed_total_payoff,
-                      agent_reward, n_rounds):
-        new_assumptions = self.assumption_checker.estimate_assumptions(prev_rewards, prev_opp_rewards, round_num,
-                                                                       self.expert_to_use)
+                      agent_reward, n_rounds, state, prev_reward_1, prev_reward_2, actions):
+        if self.use_auto_aat:
+            assert self.assumption_pred_model is not None
+            assert self.state_scaler is not None
 
-        self.prev_i.append(new_assumptions.improvement_assumption)
-        self.prev_e.append(new_assumptions.efficient_assumption)
-        self.prev_v.append(new_assumptions.vengeful_assumption)
-        self.prev_f.append(new_assumptions.fair_assumption)
-        self.prev_b.append(new_assumptions.bully_assumption)
-        self.prev_p.append(new_assumptions.pushover_assumption)
-        self.prev_u.append(new_assumptions.understands_me_assumption)
+            g_description = PRISONERS_G_DESCRIPTIONS[self.expert_to_use.name]
+
+            state_input = [actions.index(state.actions[self.player]),
+                           actions.index(state.actions[1 - self.player]),
+                           prev_reward_1,
+                           prev_reward_2]
+            state_input += [PAD_VAL] * (300 - len(state_input))
+            state_input_scaled = self.state_scaler.scale(np.array(state_input).reshape(1, -1))
+            new_assumptions = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+                                                     np.array(PRISONERS_E_DESCRIPTION).reshape(1, -1),
+                                                     state_input_scaled)).numpy()
+            new_assumptions = new_assumptions[0, :7]
+
+            self.prev_i.append(new_assumptions[0])
+            self.prev_e.append(new_assumptions[1])
+            self.prev_v.append(new_assumptions[2])
+            self.prev_f.append(new_assumptions[3])
+            self.prev_b.append(new_assumptions[4])
+            self.prev_p.append(new_assumptions[5])
+            self.prev_u.append(new_assumptions[6])
+
+        else:
+            new_assumptions = self.assumption_checker.estimate_assumptions(prev_rewards, prev_opp_rewards, round_num,
+                                                                           self.expert_to_use)
+
+            self.prev_i.append(new_assumptions.improvement_assumption)
+            self.prev_e.append(new_assumptions.efficient_assumption)
+            self.prev_v.append(new_assumptions.vengeful_assumption)
+            self.prev_f.append(new_assumptions.fair_assumption)
+            self.prev_b.append(new_assumptions.bully_assumption)
+            self.prev_p.append(new_assumptions.pushover_assumption)
+            self.prev_u.append(new_assumptions.understands_me_assumption)
 
         i_avg = sum(self.prev_i) / len(self.prev_i)
         e_avg = sum(self.prev_e) / len(self.prev_e)
@@ -536,7 +570,7 @@ class AlegAATr(Agent):
                     res[expert_key] = pred * correction_term
                     self.prev_predictions[expert_key] = pred
 
-                    print(f'{expert_key} -- {pred}')
+                    # print(f'{expert_key} -- {pred}')
 
                 else:
                     predictions, corrections, distances = self._knn_aat_prediction_func(tup[:-2], expert_key)
@@ -576,7 +610,7 @@ class AlegAATr(Agent):
                         emp_avg_log = sum(self.corrections[expert_key]) / len(self.corrections[expert_key]) if len(self.corrections[expert_key]) > 0 else np.nan
                         self.log_message += f'{total_payoff_pred}-{emp_avg_log};'
 
-                    print(f'{expert_key} -- {res[expert_key]}')
+                    # print(f'{expert_key} -- {res[expert_key]}')
 
             expert_key = max(res, key=lambda key: res[key])
             best_key = expert_key
@@ -585,7 +619,7 @@ class AlegAATr(Agent):
             old_expert = self.expert_to_use.name
             self.expert_to_use = self.experts[best_key]
 
-            print(f'AlgAATer expert: {best_key}')
+            # print(f'AlgAATer expert: {best_key}')
 
             if old_expert != self.expert_to_use.name and isinstance(self.expert_to_use, FolkEgalPunishAgent):
                 self.expert_to_use.start_round, self.expert_to_use.should_attack = round_num + 1, False

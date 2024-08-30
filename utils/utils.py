@@ -10,3 +10,4 @@ PRISONERS_G_DESCRIPTIONS = {
     'AlgaaterMinimax': 'Generator that tries to achieve the best outcome under the worst possible conditions',
     'AlgaaterCfr': 'Generator that tries to minimize regret'
 }
+NETWORK_NAME = 'AATention'

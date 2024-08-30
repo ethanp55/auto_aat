@@ -5,7 +5,7 @@ from agents.minimax_q import MinimaxAgent
 from agents.alegaatr import ESTIMATES_LOOKBACK, TRAIN_RANDOM_PROB, TRAIN_RANDOM_N_ROUNDS_RATIOS, \
     distance_func, AssumptionChecker, Assumptions
 from agents.cfr import CFRAgent
-from utils.utils import P1, P2, PAD_VAL, PRISONERS_E_DESCRIPTION, PRISONERS_G_DESCRIPTIONS
+from utils.utils import P1, P2, PAD_VAL, PRISONERS_E_DESCRIPTION, PRISONERS_G_DESCRIPTIONS, NETWORK_NAME
 import numpy as np
 from copy import deepcopy
 import pickle
@@ -17,7 +17,6 @@ import time
 
 prisoner_game = PrisonersDilemma()
 data_dir = '../aat/training_data/' + str(prisoner_game) + '/'
-NETWORK_NAME = 'AATention'
 assumption_pred_model = load_model(f'../networks/models/{NETWORK_NAME}.keras')
 state_scaler = pickle.load(open(f'../networks/scalers/{NETWORK_NAME}_state_scaler.pickle', 'rb'))
 assert state_scaler._scaler is not None

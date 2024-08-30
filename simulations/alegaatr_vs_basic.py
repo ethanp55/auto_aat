@@ -77,7 +77,6 @@ for epoch in range(1, n_epochs + 1):
     n_rounds = min_rounds
 
     for opponent_key in opponents.keys():
-        print('Opponent: ' + str(opponent_key))
         algaater.reset_expert()
         opponent_agent = deepcopy(opponents[opponent_key])
         algaater_rewards = []
@@ -91,7 +90,6 @@ for epoch in range(1, n_epochs + 1):
         prev_reward_2 = 0
 
         for round_num in range(n_rounds):
-            # print('Round: ' + str(round_num + 1))
             prisoners_game.reset()
             state = deepcopy(prisoners_game.get_init_state())
             action_map = dict()
@@ -103,8 +101,6 @@ for epoch in range(1, n_epochs + 1):
 
             rewards_1 = []
             rewards_2 = []
-
-            # print('Algaater agent: ' + str(algaater.expert_to_use.name))
 
             while not state.is_terminal():
                 for agent_key, agent in key_agent_map.items():
@@ -141,8 +137,6 @@ for epoch in range(1, n_epochs + 1):
             prev_reward_2 = sum(rewards_2)
             prev_rewards.append(prev_reward_1)
             prev_opp_rewards.append(prev_reward_2)
-            # print(f'Algaater: {prev_reward_1}, {actions}')
-            # print(f'Opp: {prev_reward_2}, {opp_actions}')
             agent_reward = reward_map[algaater.name]
             proposed_avg_payoff = baselines[algaater.expert_to_use.name]
             n_remaining_rounds = n_rounds - round_num - 1

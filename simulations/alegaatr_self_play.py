@@ -9,7 +9,7 @@ import pandas as pd
 
 prisoners_game = PrisonersDilemma()
 
-n_epochs = 2
+n_epochs = 50
 min_rounds = 50
 max_rounds = 100
 possible_rounds = list(range(min_rounds, max_rounds + 1))

@@ -59,9 +59,6 @@ for use_random_switching in [True, False]:
         algaater_idx = np.random.choice([P1, P2])
         opponent_idx = 1 - algaater_idx
 
-        print(algaater_idx)
-        print(opponent_idx)
-
         opponents = create_opponent_agents(opponent_idx)
         assumption_checker = AssumptionChecker(prisoner_game, algaater_idx, baselines)
         experts = assumption_checker.experts
@@ -72,7 +69,8 @@ for use_random_switching in [True, False]:
         for expert_key in experts.keys():
             expert_agent = deepcopy(experts[expert_key])
             expert_training_data = []
-            g_description = PRISONERS_G_DESCRIPTIONS[expert_key]
+            # g_description = PRISONERS_G_DESCRIPTIONS[expert_key]
+            g_description = 'Generator for playing the prisoner\'s dilemma game'
 
             for opponent_key in opponents.keys():
                 opp_name = 'opp'

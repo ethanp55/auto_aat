@@ -17,7 +17,7 @@ possible_rounds = list(range(min_rounds, max_rounds + 1))
 total_rewards_1 = []
 total_rewards_2 = []
 
-use_auto_aat = False
+use_auto_aat = True
 
 for epoch in range(1, n_epochs + 1):
     print('Epoch: ' + str(epoch))

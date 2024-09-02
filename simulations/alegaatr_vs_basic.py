@@ -56,7 +56,7 @@ def create_opponent_agents(player_idx):
 
 create_graphs = True
 save_data = True
-use_auto_aat = False
+use_auto_aat = True
 
 n_epochs = 50
 min_rounds = 50

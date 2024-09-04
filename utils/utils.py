@@ -10,4 +10,5 @@ PRISONERS_G_DESCRIPTIONS = {
     'AlgaaterMinimax': 'Generator that tries to achieve the best outcome under the worst possible conditions',
     'AlgaaterCfr': 'Generator that tries to minimize regret'
 }
+FOREX_E_DESCRIPTION = 'Foreign exchange market trading, which can be viewed as a repeated, zero-sum game'
 NETWORK_NAME = 'AATention'

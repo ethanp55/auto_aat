@@ -9,8 +9,9 @@ from collections import deque
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import pandas as pd
+import csv
 
-game = ChickenGame()
+game = PrisonersDilemma()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)
@@ -27,6 +28,11 @@ total_rewards_1 = []
 total_rewards_2 = []
 
 use_auto_aat = True
+
+file_modifier = '_auto' if use_auto_aat else ''
+vector_file = f'../../analysis/{str(game)}_vectors/Alegaatr1_spp{file_modifier}.csv'
+with open(vector_file, 'w', newline='') as _:
+    pass
 
 for epoch in range(1, n_epochs + 1):
     print('Epoch: ' + str(epoch))
@@ -129,6 +135,13 @@ for epoch in range(1, n_epochs + 1):
 
         spp.update_actions_and_rewards(opp_actions_1, opp_actions_2, prev_reward_2)
 
+        if algaater.tracked_vector is not None:
+            assert algaater.expert_to_use is not None
+            with open(vector_file, 'a', newline='') as file:
+                writer = csv.writer(file)
+                row = np.concatenate([np.array([algaater.expert_to_use.name]), algaater.tracked_vector])
+                writer.writerow(np.squeeze(row))
+
     total_rewards_1.append(epoch_rewards_1)
     total_rewards_2.append(epoch_rewards_2)
 
@@ -139,8 +152,6 @@ for i in range(len(total_rewards_1)):
 
     vals_1.append(final_reward_1)
     vals_2.append(final_reward_2)
-
-file_modifier = '_auto' if use_auto_aat else ''
 
 compressed_rewards_df = pd.DataFrame(vals_1, columns=['Algaater'])
 compressed_rewards_df.to_csv(f'../../analysis/{str(game)}/algaater_vs_spp_algaater{file_modifier}.csv')

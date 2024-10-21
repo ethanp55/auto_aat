@@ -14,8 +14,9 @@ import matplotlib.pyplot as plt
 from repeated_games.agents.spp import SPP
 from repeated_games.agents.eee import EEE
 from repeated_games.agents.folk_egal import FolkEgalAgent, FolkEgalPunishAgent
+import csv
 
-game = ChickenGame()
+game = PrisonersDilemma()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)
@@ -83,6 +84,7 @@ def create_opponent_agents(player_idx):
 create_graphs = True
 save_data = True
 use_auto_aat = True
+file_modifier = '_auto' if use_auto_aat else ''
 
 n_epochs = 50
 min_rounds = 50
@@ -90,6 +92,9 @@ max_rounds = 100
 possible_rounds = list(range(min_rounds, max_rounds + 1))
 total_rewards = {}
 total_opp_rewards = {}
+vector_file = f'../../analysis/{str(game)}_vectors/Alegaatr1_basic{file_modifier}.csv'
+with open(vector_file, 'w', newline='') as _:
+    pass
 
 for epoch in range(1, n_epochs + 1):
     print('Epoch: ' + str(epoch))
@@ -171,12 +176,19 @@ for epoch in range(1, n_epochs + 1):
             proportion_payoff = agent_reward / proposed_total_payoff if proposed_total_payoff != 0 else agent_reward / 0.000001
 
             new_assumptions = algaater.update_expert(prev_rewards, prev_opp_rewards, round_num, (agent_reward / (round_num + 1)),
-                                                     proposed_total_payoff, agent_reward, n_remaining_rounds, state, prev_reward_1, prev_reward_2, ACTIONS)
+                                                     proposed_total_payoff, agent_reward, n_remaining_rounds, state, prev_reward_1, prev_reward_2, ACTIONS, DESCRIPTION)
 
             prev_assumptions = deepcopy(new_assumptions)
 
             algaater_rewards.append(agent_reward)
             opp_rewards.append(reward_map[opponent_key])
+
+            if algaater.tracked_vector is not None:
+                assert algaater.expert_to_use is not None
+                with open(vector_file, 'a', newline='') as file:
+                    writer = csv.writer(file)
+                    row = np.concatenate([np.array([algaater.expert_to_use.name]), algaater.tracked_vector])
+                    writer.writerow(np.squeeze(row))
 
         total_rew = total_rewards.get(opponent_key, [])
         total_rew.append(algaater_rewards)
@@ -184,8 +196,6 @@ for epoch in range(1, n_epochs + 1):
         total_opp_rew = total_opp_rewards.get(opponent_key, [])
         total_opp_rew.append(opp_rewards)
         total_opp_rewards[opponent_key] = total_opp_rew
-
-file_modifier = '_auto' if use_auto_aat else ''
 
 if save_data:
     vals = []

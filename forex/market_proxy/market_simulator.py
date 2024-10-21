@@ -1,3 +1,4 @@
+import csv
 from forex.aat.aat_trainer import AATTrainer
 from datetime import datetime
 from forex.experiments.metrics_tracker import MetricsTracker
@@ -150,6 +151,10 @@ class MarketSimulator(object):
         # Create an AAT trainer (will only be used if we're running this simulation to train AAT)
         aat_trainer = AATTrainer(currency_pair, strategy.name, time_frame, year, auto_aat)
 
+        vector_file = f'../../analysis/forex_vectors/{strategy.name}_{currency_pair}_{time_frame}_{year}.csv'
+        with open(vector_file, 'w', newline='') as _:
+            pass
+
         # Iterate through the strategies data (either on the H4, H1, or M30 time frames)
         while i < len(strategy_data):
             # If there is no open trade, check to see if we should place one
@@ -159,6 +164,14 @@ class MarketSimulator(object):
             # If a trade was placed, update the simulation results and iterate through the smaller (5-minute) market
             # data to simulate the trade
             if curr_trade is not None:
+                # Store the vector the strategy uses (for later analysis)
+                if strategy.tracked_vector is not None:
+                    assert strategy.generator_in_use_name is not None
+                    with open(vector_file, 'a', newline='') as file:
+                        writer = csv.writer(file)
+                        row = np.concatenate([np.array([strategy.generator_in_use_name]), strategy.tracked_vector])
+                        writer.writerow(np.squeeze(row))
+
                 # Update the pips risked array
                 pips_risked.append(curr_trade.pips_risked)
 

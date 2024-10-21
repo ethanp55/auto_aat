@@ -8,8 +8,9 @@ from collections import deque
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import pandas as pd
+import csv
 
-game = ChickenGame()
+game = PrisonersDilemma()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)
@@ -24,8 +25,12 @@ max_rounds = 100
 possible_rounds = list(range(min_rounds, max_rounds + 1))
 total_rewards_1 = []
 total_rewards_2 = []
-
 use_auto_aat = True
+
+file_modifier = '_auto' if use_auto_aat else ''
+vector_file = f'../../analysis/{str(game)}_vectors/Alegaatr1_self_play{file_modifier}.csv'
+with open(vector_file, 'w', newline='') as _:
+    pass
 
 for epoch in range(1, n_epochs + 1):
     print('Epoch: ' + str(epoch))
@@ -134,6 +139,13 @@ for epoch in range(1, n_epochs + 1):
                 # prev_short_term_2, prev_medium_term_2, prev_long_term_2 = short_term, medium_term, long_term
                 prev_assumptions_2 = new_assumptions
 
+        if algaater_1.tracked_vector is not None:
+            assert algaater_1.expert_to_use is not None
+            with open(vector_file, 'a', newline='') as file:
+                writer = csv.writer(file)
+                row = np.concatenate([np.array([algaater_1.expert_to_use.name]), algaater_1.tracked_vector])
+                writer.writerow(np.squeeze(row))
+
     total_rewards_1.append(epoch_rewards_1)
     total_rewards_2.append(epoch_rewards_2)
 
@@ -143,8 +155,6 @@ for i in range(len(total_rewards_1)):
     final_reward_1, final_reward_2 = total_rewards_1[i][-1], total_rewards_2[i][-1]
 
     vals.extend([final_reward_1, final_reward_2])
-
-file_modifier = '_auto' if use_auto_aat else ''
 
 compressed_rewards_df = pd.DataFrame(vals, columns=['Algaater'])
 compressed_rewards_df.to_csv(f'../../analysis/{str(game)}/algaater_self_play{file_modifier}.csv')

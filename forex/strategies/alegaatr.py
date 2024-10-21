@@ -59,6 +59,8 @@ class AlegAATr(Strategy):
             self.state_scaler = pickle.load(open(f'../../networks/scalers/{NETWORK_NAME}_state_scaler.pickle', 'rb'))
             assert self.state_scaler._scaler is not None
 
+        self.tracked_vector = None
+
     def print_parameters(self) -> None:
         print(f'min_num_predictions: {self.min_num_predictions}')
         print(f'use_single_selection: {self.use_single_selection}')
@@ -161,8 +163,15 @@ class AlegAATr(Strategy):
             new_assumptions = Assumptions(strategy_data, curr_idx, currency_pair, 0.0, calculate=False)
             new_assumptions.set_vals(*assumption_preds)
 
+            self.tracked_vector = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+                                                              np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
+                                                              state_input_scaled),
+                                                             return_transformed_state=True).numpy().reshape(-1, )
+
         else:
             new_assumptions = Assumptions(strategy_data, curr_idx, currency_pair, 0.0)
+
+            self.tracked_vector = np.array(new_assumptions.create_aat_tuple()).reshape(-1, )
 
         x = np.array(new_assumptions.create_aat_tuple()[:-1], dtype=float).reshape(1, -1)
 
@@ -380,6 +389,7 @@ class AlegAATr(Strategy):
             self.prev_prediction = best_trade_amount
             trade = self.generators[best_generator_idx].place_trade(curr_idx, strategy_data, currency_pair,
                                                                     account_balance)
+            self.generator_in_use_name = self.generators[best_generator_idx].name
 
             if trade is not None:
                 self.time_since_used[self.generator_in_use_name] = 0

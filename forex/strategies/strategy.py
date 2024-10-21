@@ -12,6 +12,7 @@ class Strategy:
         self.starting_idx = starting_idx
         self.percent_to_risk = percent_to_risk
         self.name = name
+        self.tracked_vector = None
 
     def print_parameters(self) -> None:
         for name, val in self.__dict__.items():

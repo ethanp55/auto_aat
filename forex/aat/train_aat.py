@@ -19,7 +19,7 @@ from forex.utils.utils import CURRENCY_PAIRS, TIME_FRAMES, YEARS
 def train_aat() -> None:
     strategy_types = [BarMovement, BeepBoop, BollingerBands, Choc, KeltnerChannels, MACrossover, MACD, MACDKeyLevel,
                       MACDStochastic, PSAR, RSI, SqueezePro, Stochastic, Supertrend]
-    auto_aat_vals = [True, False]
+    auto_aat_vals = [True]
 
     for auto_aat in auto_aat_vals:
         for currency_pair in CURRENCY_PAIRS:

@@ -211,7 +211,8 @@ class AATention(Model):
 
         return cls(**config)
 
-    def call(self, data_tup: Tuple[np.array, np.array, np.array], training: bool = False) -> tf.Tensor:
+    def call(self, data_tup: Tuple[np.array, np.array, np.array], training: bool = False,
+             return_transformed_state: bool = False) -> tf.Tensor:
         g_text, e_text, state = data_tup
         g_text_processed, e_text_processed = self.text_layer((g_text, e_text), training=training)
 
@@ -227,5 +228,8 @@ class AATention(Model):
         x = x + self.dense_2(x)
         x = self.dropout(x, training=training)
         x = self.norm(x)
+
+        if return_transformed_state:
+            return x
 
         return self.output_layer(x)

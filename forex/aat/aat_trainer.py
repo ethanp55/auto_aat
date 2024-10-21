@@ -13,6 +13,7 @@ class AATTrainer:
             currency_pair, strategy_name, time_frame, year
         self.auto_aat = auto_aat
         self.recent_tuple, self.training_data = None, []
+        self.recent_state, self.states, self.trade_amounts = None, [], [] # For tuning auto AAT
 
         if self.auto_aat:
             self.assumption_pred_model = load_model(f'../../networks/models/{NETWORK_NAME}.keras')
@@ -40,6 +41,7 @@ class AATTrainer:
                                                           'n_macdsignal', 'impulse_macd', 'impulse_macdsignal']]
             state_input = list(state_input)
             state_input += [PAD_VAL] * (300 - len(state_input))
+            self.recent_state = state_input
             state_input_scaled = self.state_scaler.scale(np.array(state_input, dtype=float).reshape(1, -1))
             assumption_preds = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
                                                      np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
@@ -65,8 +67,13 @@ class AATTrainer:
         self.recent_tuple.append(correction_term)
         self.training_data.append(self.recent_tuple)
 
+        if self.auto_aat:
+            self.states.append(self.recent_state)
+            self.trade_amounts.append(final_trade_amount)
+
         # Reset the tuple for the next training iteration
         self.recent_tuple = None
+        self.recent_state = None
 
     # Trains a KNN model, saves the model, and saves the AAT correction terms
     def save(self) -> None:
@@ -98,3 +105,16 @@ class AATTrainer:
 
         with open(knn_file_name, 'wb') as f:
             pickle.dump(knn, f)
+
+        if self.auto_aat:
+            assert len(self.trade_amounts) == len(self.states)
+            assert len(self.trade_amounts) > 0
+
+            trade_amounts_file = f'../aat/training_data/{name_pair_time_year_str}_trade_amounts.pickle'
+            states_file = f'../aat/training_data/{name_pair_time_year_str}_states.pickle'
+
+            with open(trade_amounts_file, 'wb') as f:
+                pickle.dump(np.array(self.trade_amounts, dtype=float), f)
+
+            with open(states_file, 'wb') as f:
+                pickle.dump(np.array(self.states, dtype=float), f)

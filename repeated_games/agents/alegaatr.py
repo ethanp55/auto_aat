@@ -400,6 +400,8 @@ class AlegAATr(Agent):
             self.state_scaler = pickle.load(open(f'../../networks/scalers/{NETWORK_NAME}_state_scaler.pickle', 'rb'))
             assert self.state_scaler._scaler is not None
 
+        self.tracked_vector = None
+
     def _get_best_self_play_expert(self, game: MarkovGameMDP):
         self.best_self_play_expert = None
         self.best_self_play_p1_average = -np.inf
@@ -523,6 +525,11 @@ class AlegAATr(Agent):
             self.prev_p.append(new_assumptions[5])
             self.prev_u.append(new_assumptions[6])
 
+            self.tracked_vector = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+                                                              np.array(description).reshape(1, -1),
+                                                              state_input_scaled),
+                                                             return_transformed_state=True).numpy().reshape(-1, )
+
         else:
             new_assumptions = self.assumption_checker.estimate_assumptions(prev_rewards, prev_opp_rewards, round_num,
                                                                            self.expert_to_use)
@@ -543,6 +550,13 @@ class AlegAATr(Agent):
         p_avg = sum(self.prev_p) / len(self.prev_p)
         u_avg = sum(self.prev_u) / len(self.prev_u)
 
+        tup = [round_num, proportion_payoff, i_avg, e_avg, v_avg, f_avg, b_avg, p_avg, u_avg, self.player,
+               proposed_total_payoff, proposed_total_payoff]
+
+        if not self.use_auto_aat:
+            self.tracked_vector = np.array(tup[:10]).reshape(-1, )
+            self.tracked_vector = self.scalers[self.expert_to_use.name].transform(self.tracked_vector.reshape(1, -1)).reshape(-1, )
+
         self.curr_expert_reward += prev_rewards[-1]
         self.curr_expert_n_rounds += 1
 
@@ -559,9 +573,6 @@ class AlegAATr(Agent):
             return new_assumptions
 
         if round_num > self.switch_round_num:
-            tup = [round_num, proportion_payoff, i_avg, e_avg, v_avg, f_avg, b_avg, p_avg, u_avg, self.player,
-                   proposed_total_payoff, proposed_total_payoff]
-
             res = {}
 
             for expert_key in self.experts.keys():
@@ -638,6 +649,12 @@ class AlegAATr(Agent):
 
             if self.log:
                 self.log_message += f'{self.expert_to_use.name}'
+
+            if not self.use_auto_aat:
+                self.tracked_vector = self.scalers[self.expert_to_use.name].transform(self.tracked_vector.reshape(1, -1)).reshape(-1, )
+
+        else:
+            self.tracked_vector = None
 
         return new_assumptions
 

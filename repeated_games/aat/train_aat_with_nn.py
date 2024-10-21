@@ -18,7 +18,7 @@ from collections import deque
 from tensorflow.keras.models import load_model
 import time
 
-game = ChickenGame()
+game = PrisonersDilemma()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)

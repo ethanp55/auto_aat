@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import ttest_ind
+from statsmodels.stats.multicomp import pairwise_tukeyhsd
 
 
 # WARNING: BE SURE TO RUN THE CODE IN repeated_games_graphs.py (to generate/update the csv files required for these
@@ -15,60 +15,71 @@ def _cohens_d(group1, group2):
     return mean_diff / pooled_std
 
 
-for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']:
+# for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']:
+for game_name in ['prisoners_dilemma_game']:
     print('-----------------------------------------------------------------------------------------------------------')
     print(f'-------------------------------------- {game_name} --------------------------------------------')
     print('-----------------------------------------------------------------------------------------------------------')
 
     # Train
+    print('TRAIN')
     df = pd.read_csv(f'../analysis/{game_name}/combined_compressed.csv')
     aleg_rewards = df[df['Agent'] == 'AlegAATr']['Rewards']
-    aleg_auto_rewards = df[df['Agent'] == 'AlegAAATr']['Rewards']
-    t_stat, p_val = ttest_ind(aleg_rewards, aleg_auto_rewards)
-    effect_size = _cohens_d(aleg_rewards, aleg_auto_rewards)
-
-    print('TRAIN')
-    print(f'p-value = {round(p_val, 3)}, effect size = {round(effect_size, 3)}\n')
+    for name in df['Agent'].unique():
+        if name == 'AlegAATr':
+            continue
+        other_rewards = df[df['Agent'] == name]['Rewards']
+        d = _cohens_d(aleg_rewards, other_rewards)
+        print(f'AlegAATr vs. {name}: {round(d, 3)}')
+    print(pairwise_tukeyhsd(endog=df['Rewards'], groups=df['Agent'], alpha=0.05))
 
     # Test
+    print('\nTEST')
     df = pd.read_csv(f'../analysis/{game_name}/combined_compressed_test.csv')
     aleg_rewards = df[df['Agent'] == 'AlegAATr']['Rewards']
-    aleg_auto_rewards = df[df['Agent'] == 'AlegAAATr']['Rewards']
-    t_stat, p_val = ttest_ind(aleg_rewards, aleg_auto_rewards)
-    effect_size = _cohens_d(aleg_rewards, aleg_auto_rewards)
-
-    print('TEST')
-    print(f'p-value = {round(p_val, 3)}, effect size = {round(effect_size, 3)}\n')
+    for name in df['Agent'].unique():
+        if name == 'AlegAATr':
+            continue
+        other_rewards = df[df['Agent'] == name]['Rewards']
+        d = _cohens_d(aleg_rewards, other_rewards)
+        print(f'AlegAATr vs. {name}: {round(d, 3)}')
+    print(pairwise_tukeyhsd(endog=df['Rewards'], groups=df['Agent'], alpha=0.05))
 
     # Changers
+    print('\nCHANGERS')
     df = pd.read_csv(f'../analysis/{game_name}/combined_compressed_test_changers.csv')
     aleg_rewards = df[df['Agent'] == 'AlegAATr']['Rewards']
-    aleg_auto_rewards = df[df['Agent'] == 'AlegAAATr']['Rewards']
-    t_stat, p_val = ttest_ind(aleg_rewards, aleg_auto_rewards)
-    effect_size = _cohens_d(aleg_rewards, aleg_auto_rewards)
-
-    print('CHANGERS')
-    print(f'p-value = {round(p_val, 3)}, effect size = {round(effect_size, 3)}\n')
+    for name in df['Agent'].unique():
+        if name == 'AlegAATr':
+            continue
+        other_rewards = df[df['Agent'] == name]['Rewards']
+        d = _cohens_d(aleg_rewards, other_rewards)
+        print(f'AlegAATr vs. {name}: {round(d, 3)}')
+    print(pairwise_tukeyhsd(endog=df['Rewards'], groups=df['Agent'], alpha=0.05))
 
     # Self-play
+    print('\nSELF-PLAY')
     df = pd.read_csv(f'../analysis/{game_name}/combined_self_play.csv')
     aleg_rewards = df[df['Agent'] == 'AlegAATr']['Rewards']
-    aleg_auto_rewards = df[df['Agent'] == 'AlegAAATr']['Rewards']
-    t_stat, p_val = ttest_ind(aleg_rewards, aleg_auto_rewards)
-    effect_size = _cohens_d(aleg_rewards, aleg_auto_rewards)
-
-    print('SELF-PLAY')
-    print(f'p-value = {round(p_val, 3)}, effect size = {round(effect_size, 3)}\n')
+    for name in df['Agent'].unique():
+        if name == 'AlegAATr':
+            continue
+        other_rewards = df[df['Agent'] == name]['Rewards']
+        d = _cohens_d(aleg_rewards, other_rewards)
+        print(f'AlegAATr vs. {name}: {round(d, 3)}')
+    print(pairwise_tukeyhsd(endog=df['Rewards'], groups=df['Agent'], alpha=0.05))
 
     # Intelligent
+    print('\nINTELLIGENT')
     df = pd.read_csv(f'../analysis/{game_name}/combined_compressed_smart.csv')
     aleg_rewards = df[df['Agent'] == 'AlegAATr']['Rewards']
-    aleg_auto_rewards = df[df['Agent'] == 'AlegAAATr']['Rewards']
-    t_stat, p_val = ttest_ind(aleg_rewards, aleg_auto_rewards)
-    effect_size = _cohens_d(aleg_rewards, aleg_auto_rewards)
-
-    print('INTELLIGENT')
-    print(f'p-value = {round(p_val, 3)}, effect size = {round(effect_size, 3)}')
+    for name in df['Agent'].unique():
+        if name == 'AlegAATr':
+            continue
+        other_rewards = df[df['Agent'] == name]['Rewards']
+        d = _cohens_d(aleg_rewards, other_rewards)
+        print(f'AlegAATr vs. {name}: {round(d, 3)}')
+    print(pairwise_tukeyhsd(endog=df['Rewards'], groups=df['Agent'], alpha=0.05))
 
     print('-----------------------------------------------------------------------------------------------------------')
     print('-----------------------------------------------------------------------------------------------------------')

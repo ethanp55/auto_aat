@@ -83,8 +83,9 @@ def create_opponent_agents(player_idx):
 
 create_graphs = True
 save_data = True
-use_auto_aat = True
-file_modifier = '_auto' if use_auto_aat else ''
+use_auto_aat = False
+auto_aat_tuned = True
+file_modifier = '_auto' if use_auto_aat else ('_auto_tuned' if auto_aat_tuned else '')
 
 n_epochs = 50
 min_rounds = 50
@@ -102,7 +103,7 @@ for epoch in range(1, n_epochs + 1):
     opponent_idx = 1 - algaater_idx
 
     opponents = create_opponent_agents(opponent_idx)
-    algaater = AlegAATr('Alegaatr1', game, algaater_idx, baselines, use_auto_aat=use_auto_aat)
+    algaater = AlegAATr('Alegaatr1', game, algaater_idx, baselines, use_auto_aat=use_auto_aat, auto_aat_tuned=auto_aat_tuned)
 
     # n_rounds = np.random.choice(possible_rounds)
     n_rounds = min_rounds

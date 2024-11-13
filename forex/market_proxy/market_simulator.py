@@ -17,7 +17,7 @@ class MarketSimulator(object):
     def run_simulation(strategy: Strategy, market_data_raw: DataFrame, strategy_data_raw: DataFrame, currency_pair: str,
                        time_frame: str, year: int, starting_balance: float = 10000.0,
                        train_aat: bool = False, metrics_tracker: Optional[MetricsTracker] = None,
-                       auto_aat: bool = False) -> MarketSimulationResults:
+                       auto_aat: bool = False, auto_aat_tuned: bool = False) -> MarketSimulationResults:
         # Numerical results we keep track of
         simulation_results = MarketSimulationResults(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, starting_balance, starting_balance,
                                                      starting_balance, starting_balance, 0, 0)
@@ -149,7 +149,7 @@ class MarketSimulator(object):
             return None
 
         # Create an AAT trainer (will only be used if we're running this simulation to train AAT)
-        aat_trainer = AATTrainer(currency_pair, strategy.name, time_frame, year, auto_aat)
+        aat_trainer = AATTrainer(currency_pair, strategy.name, time_frame, year, auto_aat, auto_aat_tuned)
 
         vector_file = f'../../analysis/forex_vectors/{strategy.name}_{currency_pair}_{time_frame}_{year}.csv'
         with open(vector_file, 'w', newline='') as _:

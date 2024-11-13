@@ -27,9 +27,10 @@ possible_rounds = list(range(min_rounds, max_rounds + 1))
 total_rewards_1 = []
 total_rewards_2 = []
 
-use_auto_aat = True
+use_auto_aat = False
+auto_aat_tuned = True
 
-file_modifier = '_auto' if use_auto_aat else ''
+file_modifier = '_auto' if use_auto_aat else ('_auto_tuned' if auto_aat_tuned else '')
 vector_file = f'../../analysis/{str(game)}_vectors/Alegaatr1_eee{file_modifier}.csv'
 with open(vector_file, 'w', newline='') as _:
     pass
@@ -44,7 +45,7 @@ for epoch in range(1, n_epochs + 1):
     eee_idx = 1 - algaater_idx
     eee_experts = AlegAATr.create_aat_experts(game, eee_idx)
 
-    algaater = AlegAATr('Algaater', game, algaater_idx, baselines, use_auto_aat=use_auto_aat)
+    algaater = AlegAATr('Algaater', game, algaater_idx, baselines, use_auto_aat=use_auto_aat, auto_aat_tuned=auto_aat_tuned)
     eee = EEE('EEE', eee_experts, eee_idx, demo=True)
 
     # n_rounds = np.random.choice(possible_rounds)

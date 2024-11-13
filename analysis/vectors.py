@@ -39,11 +39,11 @@ def _plot_embeddings(labels: List[str], embeddings: np.array, agent_name: str, t
 
 folder = f'../analysis/{FILE_ADJ}_vectors/'
 gen_vectors = {}
-agents_to_ignore = []  # Agents that converged to output the same vector, regardless of state
+agents_to_include = ['AlegAATr', 'AlegAAATr', 'SMAlegAATr', 'AlegAAATTr']
 
 for file in os.listdir(folder):
     agent_name = file.split('_')[0]
-    if agent_name in agents_to_ignore:
+    if agent_name not in agents_to_include:
         continue
     file_path = f'{folder}{file}'
     data = pd.read_csv(file_path, header=None)

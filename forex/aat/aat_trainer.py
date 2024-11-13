@@ -4,14 +4,16 @@ from pandas import DataFrame
 import pickle
 from sklearn.neighbors import KNeighborsRegressor
 from tensorflow.keras.models import load_model
-from utils.utils import FOREX_E_DESCRIPTION, NETWORK_NAME, PAD_VAL
+from utils.utils import FOREX_E_DESCRIPTION, FOREX_G_DESCRIPTIONS, NETWORK_NAME, PAD_VAL
 
 
 class AATTrainer:
-    def __init__(self, currency_pair: str, strategy_name: str, time_frame: str, year: int, auto_aat: bool) -> None:
+    def __init__(self, currency_pair: str, strategy_name: str, time_frame: str, year: int, auto_aat: bool,
+                 auto_aat_tuned: bool) -> None:
         self.currency_pair, self.strategy_name, self.time_frame, self.year = \
             currency_pair, strategy_name, time_frame, year
         self.auto_aat = auto_aat
+        self.auto_aat_tuned = auto_aat_tuned
         self.recent_tuple, self.training_data = None, []
         self.recent_state, self.states, self.trade_amounts = None, [], [] # For tuning auto AAT
 
@@ -19,6 +21,12 @@ class AATTrainer:
             self.assumption_pred_model = load_model(f'../../networks/models/{NETWORK_NAME}.keras')
             self.state_scaler = pickle.load(open(f'../../networks/scalers/{NETWORK_NAME}_state_scaler.pickle', 'rb'))
             assert self.state_scaler._scaler is not None
+
+        elif self.auto_aat_tuned:
+            pair_time_year_str = f'{currency_pair}_{time_frame}_{year}'
+
+            self.model = load_model(f'../aat/auto_aat_tuned/{pair_time_year_str}_tuned_model.keras')
+            self.scaler = pickle.load(open(f'../aat/auto_aat_tuned/{pair_time_year_str}_tuned_scaler.pickle', 'rb'))
 
     # Adds a new AAT tuple to its training data
     def create_new_tuple(self, df: DataFrame, curr_idx: int, trade_amount: float) -> None:
@@ -44,6 +52,33 @@ class AATTrainer:
             self.recent_state = state_input
             state_input_scaled = self.state_scaler.scale(np.array(state_input, dtype=float).reshape(1, -1))
             assumption_preds = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+                                                     np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
+                                                     state_input_scaled)).numpy()
+            assumption_preds = list(assumption_preds[0, :34])
+            assumption_preds.append(trade_amount)
+            new_assumptions = Assumptions(df, curr_idx, self.currency_pair, trade_amount, calculate=False)
+            new_assumptions.set_vals(*assumption_preds)
+
+        elif self.auto_aat_tuned:
+            assert self.model is not None and self.scaler is not None
+            g_description = FOREX_G_DESCRIPTIONS[self.strategy_name]
+            state_input = df.loc[df.index[curr_idx - 1], ['Mid_Open', 'Mid_High', 'Mid_Low', 'Mid_Close', 'Volume',
+                                                          'atr', 'lower_atr_band', 'upper_atr_band', 'ema200',
+                                                          'ema100', 'ema50', 'smma200', 'smma100', 'smma50',
+                                                          'bid_pips_down', 'bid_pips_up', 'ask_pips_down',
+                                                          'ask_pips_up', 'rsi', 'rsi_sma', 'adx', 'chop', 'vo',
+                                                          'rsi_up', 'adx_large', 'chop_small', 'vo_positive',
+                                                          'squeeze_on', 'macd', 'macdsignal', 'macdhist', 'beep_boop',
+                                                          'support_fractal', 'resistance_fractal', 'sar', 'lower_kc',
+                                                          'upper_kc', 'lower_bb', 'upper_bb', 'qqe_up', 'qqe_down',
+                                                          'qqe_val', 'supertrend', 'supertrend_ub', 'supertrend_lb',
+                                                          'slowk', 'slowd', 'slowk_rsi', 'slowd_rsi', 'n_macd',
+                                                          'n_macdsignal', 'impulse_macd', 'impulse_macdsignal']]
+            state_input = list(state_input)
+            state_input += [PAD_VAL] * (300 - len(state_input))
+            self.recent_state = state_input
+            state_input_scaled = self.scaler.transform(np.array(state_input, dtype=float).reshape(1, -1))
+            assumption_preds = self.model.auto_aat_model((np.array(g_description).reshape(1, -1),
                                                      np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
                                                      state_input_scaled)).numpy()
             assumption_preds = list(assumption_preds[0, :34])
@@ -77,7 +112,7 @@ class AATTrainer:
 
     # Trains a KNN model, saves the model, and saves the AAT correction terms
     def save(self) -> None:
-        file_adjustment = '_auto' if self.auto_aat else ''
+        file_adjustment = '_auto' if self.auto_aat else ('autotuned' if self.auto_aat_tuned else '')
         name_pair_time_year_str = f'{self.strategy_name}_{self.currency_pair}_{self.time_frame}_{self.year}'
 
         x = np.array(self.training_data, dtype=float)

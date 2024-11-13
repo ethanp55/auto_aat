@@ -1,13 +1,13 @@
 import random
-from repeated_games.chicken_game import ChickenGame, baselines as chicken_baselines
-from repeated_games.coordination_game import CoordinationGame, baselines as coord_baselines
-from repeated_games.prisoners_dilemma import PrisonersDilemma, baselines as pd_baselines
+from repeated_games.chicken_game import ChickenGame, baselines as chicken_baselines, ACTIONS as chicken_actions
+from repeated_games.coordination_game import CoordinationGame, baselines as coord_baselines, ACTIONS as coord_actions
+from repeated_games.prisoners_dilemma import PrisonersDilemma, baselines as pd_baselines, ACTIONS as pd_actions
 from repeated_games.agents.folk_egal import FolkEgalAgent, FolkEgalPunishAgent
 from repeated_games.agents.minimax_q import MinimaxAgent
 from repeated_games.agents.alegaatr import ESTIMATES_LOOKBACK, TRAIN_RANDOM_PROB, TRAIN_RANDOM_N_ROUNDS_RATIOS, \
     distance_func, AssumptionChecker, Assumptions
 from repeated_games.agents.cfr import CFRAgent
-from utils.utils import P1, P2
+from utils.utils import P1, P2, PAD_VAL
 import numpy as np
 from copy import deepcopy
 import pickle
@@ -17,11 +17,13 @@ from collections import deque
 import time
 
 
-game = PrisonersDilemma()
+game = ChickenGame()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)
 data_dir = '../aat/training_data/' + str(game) + '/'
+ACTIONS = pd_actions if str(game) == 'prisoners_dilemma_game' else \
+    (chicken_actions if str(game) == 'chicken_game' else coord_actions)
 
 
 # Create opponent agents
@@ -54,6 +56,7 @@ min_rounds = 50
 max_rounds = 100
 possible_rounds = list(range(min_rounds, max_rounds + 1))
 training_data = {}
+training_states, training_rewards = {}, {}
 
 for use_random_switching in [True, False]:
     for epoch in range(1, n_epochs + 1):
@@ -71,12 +74,15 @@ for use_random_switching in [True, False]:
         for expert_key in experts.keys():
             expert_agent = deepcopy(experts[expert_key])
             expert_training_data = []
+            expert_rewards = []
+            expert_states = []
 
             for opponent_key in opponents.keys():
                 opp_name = 'opp'
                 playing_random, random_round_cnt, random_n_rounds = False, 0, 0
                 opponent_agent = deepcopy(opponents[opponent_key])
                 current_training_data = []
+                current_states = []
                 reward_map = {opp_name: 0, expert_key: 0}
                 prev_rewards = deque(maxlen=ESTIMATES_LOOKBACK)
                 prev_opp_rewards = deque(maxlen=ESTIMATES_LOOKBACK)
@@ -186,6 +192,13 @@ for use_random_switching in [True, False]:
 
                     current_training_data.append(curr_tup)
 
+                    state_input = [ACTIONS.index(state.actions[algaater_idx]),
+                                   ACTIONS.index(state.actions[opponent_idx]),
+                                   prev_reward_1,
+                                   prev_reward_2]
+                    state_input += [PAD_VAL] * (300 - len(state_input))
+                    current_states.append(state_input)
+
                 total_payoff = reward_map[expert_key]
 
                 for tup in current_training_data:
@@ -193,11 +206,23 @@ for use_random_switching in [True, False]:
                     tup[-2] = (total_payoff / n_rounds) / tup[-2] if tup[-2] != 0 else (total_payoff / n_rounds) / 0.000001
 
                 expert_training_data.extend(current_training_data)
+                expert_rewards.extend([total_payoff / n_rounds] * len(current_training_data))
+                expert_states.extend(current_states)
 
             training_data[expert_key] = training_data.get(expert_key, []) + expert_training_data
+            training_states[expert_key] = training_states.get(expert_key, []) + expert_states
+            training_rewards[expert_key] = training_rewards.get(expert_key, []) + expert_rewards
 
 for expert_key, data in training_data.items():
     with open(data_dir + expert_key + '_training_data.pickle', 'wb') as f:
+        pickle.dump(data, f)
+
+for expert_key, data in training_states.items():
+    with open(data_dir + expert_key + '_states.pickle', 'wb') as f:
+        pickle.dump(data, f)
+
+for expert_key, data in training_rewards.items():
+    with open(data_dir + expert_key + '_rewards.pickle', 'wb') as f:
         pickle.dump(data, f)
 
 time.sleep(5)

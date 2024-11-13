@@ -1,7 +1,6 @@
 from forex.aat.assumptions import Assumptions
 from collections import deque
 from copy import deepcopy
-from forex.market_proxy.market_calculations import MarketCalculations
 from forex.market_proxy.market_simulation_results import MarketSimulationResults
 from forex.market_proxy.trade import Trade, TradeType
 import numpy as np
@@ -23,20 +22,21 @@ from forex.strategies.stochastic import Stochastic
 from forex.strategies.strategy import Strategy
 from forex.strategies.supertrend import Supertrend
 from tensorflow.keras.models import load_model
-from typing import Optional
-from utils.utils import FOREX_E_DESCRIPTION, NETWORK_NAME, PAD_VAL
+from typing import Optional, List
+from utils.utils import FOREX_E_DESCRIPTION,FOREX_G_DESCRIPTIONS, NETWORK_NAME, PAD_VAL
 
 
 class AlegAATr(Strategy):
     def __init__(self, name: str = 'AlegAATr', starting_idx: int = 2, percent_to_risk: float = 0.02, min_num_predictions: int = 0,
                  use_single_selection: bool = True, invert: bool = False, min_neighbors: int = 1,
                  max_neighbors: int = 100000, genetic: bool = False, lmbda: float = 0.0,
-                 optimistic_start: bool = False, auto_aat: bool = False) -> None:
+                 optimistic_start: bool = False, auto_aat: bool = False, auto_aat_tuned: bool = False) -> None:
         super().__init__(starting_idx, percent_to_risk, name)
         self.generators = [BarMovement(), BeepBoop(), BollingerBands(), Choc(), KeltnerChannels(), MACrossover(),
                            MACD(), MACDKeyLevel(), MACDStochastic(), PSAR(), RSI(), SqueezePro(), Stochastic(),
                            Supertrend()]
         self.auto_aat = auto_aat
+        self.auto_aat_tuned = auto_aat_tuned
         self.models, self.correction_terms = {}, {}
         self.min_num_predictions, self.use_single_selection, self.invert, self.min_neighbors, self.max_neighbors = \
             min_num_predictions, use_single_selection, invert, min_neighbors, max_neighbors
@@ -109,7 +109,13 @@ class AlegAATr(Strategy):
         self.empirical_rewards[self.generator_in_use_name].append(net_profit)
 
     def load_best_parameters(self, currency_pair: str, time_frame: str, year: int) -> None:
-        file_adjustment = '_auto' if self.auto_aat else ''
+        if self.auto_aat_tuned:
+            pair_time_year_str = f'{currency_pair}_{time_frame}_{year}'
+
+            self.model = load_model(f'../aat/auto_aat_tuned/{pair_time_year_str}_tuned_model.keras')
+            self.scaler = pickle.load(open(f'../aat/auto_aat_tuned/{pair_time_year_str}_tuned_scaler.pickle', 'rb'))
+
+        file_adjustment = '_auto' if self.auto_aat else ('autotuned' if self.auto_aat_tuned else '')
 
         for generator in self.generators:
             try:
@@ -137,6 +143,9 @@ class AlegAATr(Strategy):
         if curr_idx < self.min_idx:
             return None
 
+        vectors = []
+        tracked_vectors = []
+
         if self.auto_aat:
             assert self.assumption_pred_model is not None and self.state_scaler is not None
             g_description = 'Generator that represents a trading strategy'
@@ -163,23 +172,53 @@ class AlegAATr(Strategy):
             new_assumptions = Assumptions(strategy_data, curr_idx, currency_pair, 0.0, calculate=False)
             new_assumptions.set_vals(*assumption_preds)
 
-            self.tracked_vector = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+            tracked_vectors.append(self.assumption_pred_model((np.array(g_description).reshape(1, -1),
                                                               np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
                                                               state_input_scaled),
-                                                             return_transformed_state=True).numpy().reshape(-1, )
+                                                             return_transformed_state=True).numpy().reshape(-1, ))
+            vectors.append(np.array(new_assumptions.create_aat_tuple()[:-1], dtype=float).reshape(1, -1))
+
+        elif self.auto_aat_tuned:
+            assert self.model is not None and self.scaler is not None
+
+            for gen in self.generators:
+                g_description = FOREX_G_DESCRIPTIONS[gen.name]
+                state_input = strategy_data.loc[strategy_data.index[curr_idx - 1], ['Mid_Open', 'Mid_High', 'Mid_Low', 'Mid_Close', 'Volume',
+                                                              'atr', 'lower_atr_band', 'upper_atr_band', 'ema200',
+                                                              'ema100', 'ema50', 'smma200', 'smma100', 'smma50',
+                                                              'bid_pips_down', 'bid_pips_up', 'ask_pips_down',
+                                                              'ask_pips_up', 'rsi', 'rsi_sma', 'adx', 'chop', 'vo',
+                                                              'rsi_up', 'adx_large', 'chop_small', 'vo_positive',
+                                                              'squeeze_on', 'macd', 'macdsignal', 'macdhist', 'beep_boop',
+                                                              'support_fractal', 'resistance_fractal', 'sar', 'lower_kc',
+                                                              'upper_kc', 'lower_bb', 'upper_bb', 'qqe_up', 'qqe_down',
+                                                              'qqe_val', 'supertrend', 'supertrend_ub', 'supertrend_lb',
+                                                              'slowk', 'slowd', 'slowk_rsi', 'slowd_rsi', 'n_macd',
+                                                              'n_macdsignal', 'impulse_macd', 'impulse_macdsignal']]
+                state_input = list(state_input)
+                state_input += [PAD_VAL] * (300 - len(state_input))
+                state_input_scaled = self.scaler.transform(np.array(state_input, dtype=float).reshape(1, -1))
+                assumption_preds = self.model.auto_aat_model((np.array(g_description).reshape(1, -1),
+                                                         np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
+                                                         state_input_scaled)).numpy()
+                assumption_preds = list(assumption_preds[0, :34])
+                assumption_preds.append(0.0)
+                new_assumptions = Assumptions(strategy_data, curr_idx, currency_pair, 0.0, calculate=False)
+                new_assumptions.set_vals(*assumption_preds)
+
+                tracked_vectors.append(self.model.auto_aat_model((np.array(g_description).reshape(1, -1),
+                                                                  np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
+                                                                  state_input_scaled),
+                                                                 return_transformed_state=True).numpy().reshape(-1, ))
+
+                vectors.append(np.array(new_assumptions.create_aat_tuple()[:-1], dtype=float).reshape(1, -1))
 
         else:
             new_assumptions = Assumptions(strategy_data, curr_idx, currency_pair, 0.0)
+            tracked_vectors.append(np.array(new_assumptions.create_aat_tuple()).reshape(-1, ))
+            vectors.append(np.array(new_assumptions.create_aat_tuple()[:-1], dtype=float).reshape(1, -1))
 
-            self.tracked_vector = np.array(new_assumptions.create_aat_tuple()).reshape(-1, )
-
-        x = np.array(new_assumptions.create_aat_tuple()[:-1], dtype=float).reshape(1, -1)
-
-        if self.use_single_selection:
-            return self._single_selection(x, curr_idx, strategy_data, currency_pair, account_balance)
-
-        else:
-            return self._weighted_ensemble(x, curr_idx, strategy_data, currency_pair, account_balance)
+        return self._single_selection(vectors, tracked_vectors, curr_idx, strategy_data, currency_pair, account_balance)
 
     def _invert(self, trade: Trade, curr_ao: float, curr_bo: float) -> Trade:
         if self.invert:
@@ -208,151 +247,15 @@ class AlegAATr(Strategy):
         else:
             return trade
 
-    def _weighted_ensemble(self, x: np.array, curr_idx: int, strategy_data: DataFrame, currency_pair: str,
-                           account_balance: float) -> Optional[Trade]:
-        trades, amount_predictions = [], []
-
-        for generator in self.generators:
-            trade = generator.place_trade(curr_idx, strategy_data, currency_pair, account_balance)
-
-            if trade is not None and generator.name in self.models:
-                knn_model, training_data = self.models[generator.name], self.correction_terms[generator.name]
-                n_neighbors = len(training_data)
-
-                if self.min_neighbors <= n_neighbors <= self.max_neighbors:
-                    neighbor_distances, neighbor_indices = knn_model.kneighbors(x)
-                    corrections, distances = [], []
-                    baseline = abs(trade.open_price - trade.stop_loss) * trade.n_units
-
-                    for i in range(len(neighbor_indices[0])):
-                        neighbor_idx = neighbor_indices[0][i]
-                        neighbor_dist = neighbor_distances[0][i]
-                        corrections.append(training_data[neighbor_idx,])
-                        distances.append(neighbor_dist)
-
-                    trade_amount_pred, inverse_distance_sum = 0, 0
-
-                    for dist in distances:
-                        inverse_distance_sum += (1 / dist) if dist != 0 else (1 / 0.000001)
-
-                    for i in range(len(corrections)):
-                        distance_i, cor = distances[i], corrections[i]
-                        inverse_distance_i = (1 / distance_i) if distance_i != 0 else (1 / 0.000001)
-                        distance_weight = inverse_distance_i / inverse_distance_sum
-
-                        trade_amount_pred += (baseline * cor * distance_weight)
-
-                    if trade_amount_pred > 0:
-                        trades.append((trade, generator))
-                        amount_predictions.append(trade_amount_pred)
-
-        if len(trades) < self.min_num_predictions:
-            return None
-
-        assert len(trades) == len(amount_predictions)
-
-        amount_predictions_sum = sum(amount_predictions)
-
-        # Keep track of different metrics that the strategies "vote" on
-        n_buys, n_sells = 0, 0
-        n_buy_use_tsl, n_sell_use_tsl, n_buy_close_trade_incrementally, n_sell_close_trade_incrementally = 0, 0, 0, 0
-        buy_sl_pips, sell_sl_pips = [], []
-        buy_sg_pips, sell_sg_pips = [], []
-        n_buy_sg, n_sell_sg = 0, 0
-
-        # Current data used for trade calculations
-        curr_date, curr_ao, curr_bo, curr_mo, curr_bh, curr_al = strategy_data.loc[
-            strategy_data.index[curr_idx], ['Date', 'Ask_Open', 'Bid_Open', 'Mid_Open', 'Bid_High', 'Ask_Low']]
-        spread = abs(curr_ao - curr_bo)
-
-        # Predicted trade value
-        trade_value = np.array(amount_predictions).mean()
-
-        for i in range(len(trades)):
-            (trade, generator), amount_prediction = trades[i], amount_predictions[i]
-            amount_prediction_weight = amount_prediction / amount_predictions_sum
-
-            if trade.trade_type == TradeType.BUY:
-                n_buys += amount_prediction_weight
-                n_buy_use_tsl += amount_prediction_weight if (
-                        hasattr(generator, 'use_tsl') and generator.use_tsl) else 0
-                n_buy_close_trade_incrementally += amount_prediction_weight if \
-                    (hasattr(generator, 'close_trade_incrementally') and generator.close_trade_incrementally) else 0
-                buy_sl_pips.append(trade.pips_risked)
-
-                if trade.stop_gain is not None:
-                    n_buy_sg += amount_prediction_weight
-                    buy_sg_pips.append(trade.stop_gain - curr_ao)
-
-            else:
-                n_sells += amount_prediction_weight
-                n_sell_use_tsl += amount_prediction_weight if (
-                        hasattr(generator, 'use_tsl') and generator.use_tsl) else 0
-                n_sell_close_trade_incrementally += amount_prediction_weight if \
-                    (hasattr(generator, 'close_trade_incrementally') and generator.close_trade_incrementally) else 0
-                sell_sl_pips.append(trade.pips_risked)
-
-                if trade.stop_gain is not None:
-                    n_sell_sg += amount_prediction_weight
-                    sell_sg_pips.append(curr_bo - trade.stop_gain)
-
-        # If there are more buy votes than sell votes and the number of buy votes meets the minimum number of votes,
-        # place a buy
-        if n_buys > n_sells:
-            open_price = curr_ao
-            sl_pips = sum(buy_sl_pips) / len(buy_sl_pips)
-            stop_loss = open_price - sl_pips
-
-            if stop_loss < open_price and spread <= sl_pips * 0.1:
-                trade_type = TradeType.BUY
-                amount_to_risk = account_balance * self.percent_to_risk
-                n_units = MarketCalculations.get_n_units(trade_type, stop_loss, curr_ao, curr_bo, curr_mo,
-                                                         currency_pair, amount_to_risk)
-                stop_gain = None if n_buy_sg < n_buys * 0.5 else open_price + (
-                        sum(buy_sg_pips) / len(buy_sg_pips))
-
-                self.use_tsl = n_buy_use_tsl >= n_buys * 0.5
-                self.close_trade_incrementally = n_buy_close_trade_incrementally >= n_buys * 0.5
-                self.prev_prediction = trade_value
-
-                trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, sl_pips, curr_date,
-                              currency_pair)
-
-                return self._invert(trade, curr_ao, curr_bo)
-
-        # If there are more sell votes than buy votes and the number of sell votes meets the minimum number of votes,
-        # place a sell
-        elif n_sells > n_buys:
-            open_price = curr_bo
-            sl_pips = sum(sell_sl_pips) / len(sell_sl_pips)
-            stop_loss = open_price + sl_pips
-
-            if stop_loss > open_price and spread <= sl_pips * 0.1:
-                trade_type = TradeType.SELL
-                amount_to_risk = account_balance * self.percent_to_risk
-                n_units = MarketCalculations.get_n_units(trade_type, stop_loss, curr_ao, curr_bo, curr_mo,
-                                                         currency_pair, amount_to_risk)
-                stop_gain = None if n_sell_sg < n_sells * 0.5 else open_price - (
-                        sum(sell_sg_pips) / len(sell_sg_pips))
-
-                self.use_tsl = n_sell_use_tsl >= n_sells * 0.5
-                self.close_trade_incrementally = n_sell_close_trade_incrementally >= n_sells * 0.5
-                self.prev_prediction = trade_value
-
-                trade = Trade(trade_type, open_price, stop_loss, stop_gain, n_units, sl_pips, curr_date,
-                              currency_pair)
-
-                return self._invert(trade, curr_ao, curr_bo)
-
-        return None
-
-    def _single_selection(self, x: np.array, curr_idx: int, strategy_data: DataFrame, currency_pair: str,
+    def _single_selection(self, vectors: List[np.array], tracked_vectors: List[np.array], curr_idx: int, strategy_data: DataFrame, currency_pair: str,
                           account_balance: float) -> Optional[Trade]:
         best_trade_amount, n_profitable_predictions, best_generator_idx = -np.inf, 0, 0
+        assert len(vectors) == len(tracked_vectors)
 
         for j in range(len(self.generators)):
             generator = self.generators[j]
             generator_name = generator.name
+            x = vectors[j]
 
             if generator_name in self.models:
                 prob = self.lmbda ** self.time_since_used[generator_name]
@@ -381,6 +284,8 @@ class AlegAATr(Strategy):
                             trade_amount_pred, generator_name, j
                         self.use_tsl, self.close_trade_incrementally = \
                             generator.use_tsl, generator.close_trade_incrementally
+
+        self.tracked_vector = tracked_vectors[best_generator_idx]
 
         for generator in self.generators:
             self.time_since_used[generator.name] += 1

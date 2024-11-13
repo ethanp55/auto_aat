@@ -10,7 +10,7 @@ class SimulationRunner(object):
     @staticmethod
     def run_simulation(strategy: Strategy, currency_pair: str, time_frame: str, year: int, optimize: bool,
                        train_aat: bool = False, metrics_tracker: Optional[MetricsTracker] = None,
-                       auto_aat: bool = False) -> MarketSimulationResults:
+                       auto_aat: bool = False, auto_aat_tuned: bool = False) -> MarketSimulationResults:
         market_data_raw = DataLoader.load_simulation_data(currency_pair, 'M5', optimize, year)
         strategy_data_raw = DataLoader.load_simulation_data(currency_pair, time_frame, optimize, year)
 
@@ -28,4 +28,4 @@ class SimulationRunner(object):
 
         return MarketSimulator.run_simulation(strategy, market_data_raw, strategy_data_raw, currency_pair, time_frame,
                                               year, train_aat=train_aat, metrics_tracker=metrics_tracker,
-                                              auto_aat=auto_aat)
+                                              auto_aat=auto_aat, auto_aat_tuned=auto_aat_tuned)

@@ -30,7 +30,7 @@ def train_aat() -> None:
                     for strategy in strategies_to_train:
                         SimulationRunner.run_simulation(strategy=strategy, currency_pair=currency_pair,
                                                         time_frame=time_frame, year=year, optimize=True,
-                                                        train_aat=True, auto_aat=auto_aat)
+                                                        train_aat=True, auto_aat_tuned=True)
 
 
 if __name__ == "__main__":

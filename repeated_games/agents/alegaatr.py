@@ -3,7 +3,7 @@ from simple_rl.mdp.markov_game.MarkovGameMDPClass import MarkovGameMDP
 from repeated_games.agents.folk_egal import FolkEgalAgent, FolkEgalPunishAgent
 from repeated_games.agents.minimax_q import MinimaxAgent
 from repeated_games.agents.cfr import CFRAgent
-from utils.utils import P1, P2, PAD_VAL, NETWORK_NAME
+from utils.utils import P1, P2, PAD_VAL, NETWORK_NAME, PRISONERS_G_DESCRIPTIONS
 import numpy as np
 from typing import Tuple, List
 import pickle
@@ -354,7 +354,7 @@ def distance_func(x, y):
 
 
 class AlegAATr(Agent):
-    def __init__(self, name: str, game: MarkovGameMDP, player: int, baselines, use_nn=False, lmbda=0.95, n_simulations=10, lookback=3, log=False, use_auto_aat=False):
+    def __init__(self, name: str, game: MarkovGameMDP, player: int, baselines, use_nn=False, lmbda=0.95, n_simulations=10, lookback=3, log=False, use_auto_aat=False, auto_aat_tuned=False):
         Agent.__init__(self, name=name, actions=[])
         self.name = name
         self.game = deepcopy(game)
@@ -370,6 +370,7 @@ class AlegAATr(Agent):
         self.experts = self.assumption_checker.experts
         self.expert_to_use = self.experts['AlgaaterCoop']
         self.use_auto_aat = use_auto_aat
+        self.auto_aat_tuned = auto_aat_tuned
         self.models, self.scalers, self.training_datas = self._load_model_data(self.game)
         self._get_best_self_play_expert(self.game)
         self.curr_expert_reward = 0.0
@@ -399,6 +400,10 @@ class AlegAATr(Agent):
             self.assumption_pred_model = load_model(f'../../networks/models/{NETWORK_NAME}.keras')
             self.state_scaler = pickle.load(open(f'../../networks/scalers/{NETWORK_NAME}_state_scaler.pickle', 'rb'))
             assert self.state_scaler._scaler is not None
+
+        elif self.auto_aat_tuned:
+            self.assumption_pred_model = load_model(f'../aat/auto_aat_tuned/{str(game)}_tuned_model.keras')
+            self.state_scaler = pickle.load(open(f'../aat/auto_aat_tuned/{str(game)}_tuned_scaler.pickle', 'rb'))
 
         self.tracked_vector = None
 
@@ -468,6 +473,11 @@ class AlegAATr(Agent):
                 scalers[e_key] = pickle.load(open(data_dir + e_key + '_trained_knn_scaler_aat_auto.pickle', 'rb'))
                 training_datas[e_key] = np.array(pickle.load(open(data_dir + e_key + '_training_data_auto.pickle', 'rb')))
 
+            elif self.auto_aat_tuned:
+                models[e_key] = pickle.load(open(data_dir + e_key + '_trained_knn_aat_auto_tuned.pickle', 'rb'))
+                scalers[e_key] = pickle.load(open(data_dir + e_key + '_trained_knn_scaler_aat_auto_tuned.pickle', 'rb'))
+                training_datas[e_key] = np.array(pickle.load(open(data_dir + e_key + '_training_data_auto_tuned.pickle', 'rb')))
+
             else:
                 models[e_key] = pickle.load(open(data_dir + e_key + '_trained_knn_aat.pickle', 'rb'))
                 scalers[e_key] = pickle.load(open(data_dir + e_key + '_trained_knn_scaler_aat.pickle', 'rb'))
@@ -530,6 +540,36 @@ class AlegAATr(Agent):
                                                               state_input_scaled),
                                                              return_transformed_state=True).numpy().reshape(-1, )
 
+        elif self.auto_aat_tuned:
+            assert self.assumption_pred_model is not None
+            assert self.state_scaler is not None
+
+            g_description = PRISONERS_G_DESCRIPTIONS[self.expert_to_use.name]
+
+            state_input = [actions.index(state.actions[self.player]),
+                           actions.index(state.actions[1 - self.player]),
+                           prev_reward_1,
+                           prev_reward_2]
+            state_input += [PAD_VAL] * (300 - len(state_input))
+            state_input_scaled = self.state_scaler.transform(np.array(state_input).reshape(1, -1))
+            new_assumptions = self.assumption_pred_model.auto_aat_model((np.array(g_description).reshape(1, -1),
+                                                     np.array(description).reshape(1, -1),
+                                                     state_input_scaled)).numpy()
+            new_assumptions = new_assumptions[0, :7]
+
+            self.prev_i.append(new_assumptions[0])
+            self.prev_e.append(new_assumptions[1])
+            self.prev_v.append(new_assumptions[2])
+            self.prev_f.append(new_assumptions[3])
+            self.prev_b.append(new_assumptions[4])
+            self.prev_p.append(new_assumptions[5])
+            self.prev_u.append(new_assumptions[6])
+
+            self.tracked_vector = self.assumption_pred_model.auto_aat_model((np.array(g_description).reshape(1, -1),
+                                                              np.array(description).reshape(1, -1),
+                                                              state_input_scaled),
+                                                             return_transformed_state=True).numpy().reshape(-1, )
+
         else:
             new_assumptions = self.assumption_checker.estimate_assumptions(prev_rewards, prev_opp_rewards, round_num,
                                                                            self.expert_to_use)
@@ -553,7 +593,7 @@ class AlegAATr(Agent):
         tup = [round_num, proportion_payoff, i_avg, e_avg, v_avg, f_avg, b_avg, p_avg, u_avg, self.player,
                proposed_total_payoff, proposed_total_payoff]
 
-        if not self.use_auto_aat:
+        if not self.use_auto_aat and not self.auto_aat_tuned:
             self.tracked_vector = np.array(tup[:10]).reshape(-1, )
             self.tracked_vector = self.scalers[self.expert_to_use.name].transform(self.tracked_vector.reshape(1, -1)).reshape(-1, )
 
@@ -650,7 +690,7 @@ class AlegAATr(Agent):
             if self.log:
                 self.log_message += f'{self.expert_to_use.name}'
 
-            if not self.use_auto_aat:
+            if not self.use_auto_aat and not self.auto_aat_tuned:
                 self.tracked_vector = self.scalers[self.expert_to_use.name].transform(self.tracked_vector.reshape(1, -1)).reshape(-1, )
 
         else:

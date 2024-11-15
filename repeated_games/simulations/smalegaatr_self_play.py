@@ -9,7 +9,7 @@ from copy import deepcopy
 import pandas as pd
 import csv
 
-game = PrisonersDilemma()
+game = ChickenGame()
 
 ACTIONS = pd_actions if str(game) == 'prisoners_dilemma_game' else \
     (chicken_actions if str(game) == 'chicken_game' else coord_actions)

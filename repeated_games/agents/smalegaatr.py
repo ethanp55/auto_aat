@@ -13,7 +13,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.models import load_model, Model
 from typing import Tuple
-from utils.utils import PRISONERS_E_DESCRIPTION, PRISONERS_G_DESCRIPTIONS, PAD_VAL
+from utils.utils import PRISONERS_E_DESCRIPTION, RG_G_DESCRIPTIONS, PAD_VAL
 
 
 @keras.saving.register_keras_serializable()
@@ -106,7 +106,7 @@ class SMAlegAATr(Agent):
             best_indices = []
 
             for generator_idx, generator in enumerate(list(self.generators.values())):
-                g_description = PRISONERS_G_DESCRIPTIONS[generator.name]
+                g_description = RG_G_DESCRIPTIONS[generator.name]
                 pred = self.model((np.array(g_description).reshape(1, -1),
                                    np.array(PRISONERS_E_DESCRIPTION).reshape(1, -1),
                                    self.state)).numpy()[0][0]
@@ -119,7 +119,7 @@ class SMAlegAATr(Agent):
 
             best_generator_idx = np.random.choice(best_indices)
             self.generator_in_use_name = list(self.generators.keys())[best_generator_idx]
-            best_desc = PRISONERS_G_DESCRIPTIONS[self.generator_in_use_name]
+            best_desc = RG_G_DESCRIPTIONS[self.generator_in_use_name]
             self.tracked_vector = self.model((np.array(best_desc).reshape(1, -1),
                                               np.array(PRISONERS_E_DESCRIPTION).reshape(1, -1),
                                               self.state),

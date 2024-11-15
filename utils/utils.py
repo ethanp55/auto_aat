@@ -6,7 +6,7 @@ CHICKEN_E_DESCRIPTION = 'Repeated, two-player game where players can swerve or g
                         'straight wins'
 COORD_E_DESCRIPTION = 'Repeated, two-player game where players have two choices; if they both choose the same ' \
                       'action, they both win; if they choose different actions, they both lose'
-PRISONERS_G_DESCRIPTIONS = {
+RG_G_DESCRIPTIONS = {
     'AlgaaterCoop': 'Generator that tries to cooperate with the other player',
     'AlgaaterCoopPunish': 'Generator that tries to cooperate with the other player and attacks them if they do not cooperate in return',
     'AlgaaterBully': 'Generator that tries to take advantage of the other player',

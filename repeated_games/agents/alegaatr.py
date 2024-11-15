@@ -3,7 +3,7 @@ from simple_rl.mdp.markov_game.MarkovGameMDPClass import MarkovGameMDP
 from repeated_games.agents.folk_egal import FolkEgalAgent, FolkEgalPunishAgent
 from repeated_games.agents.minimax_q import MinimaxAgent
 from repeated_games.agents.cfr import CFRAgent
-from utils.utils import P1, P2, PAD_VAL, NETWORK_NAME, PRISONERS_G_DESCRIPTIONS
+from utils.utils import P1, P2, PAD_VAL, NETWORK_NAME, RG_G_DESCRIPTIONS
 import numpy as np
 from typing import Tuple, List
 import pickle
@@ -544,7 +544,7 @@ class AlegAATr(Agent):
             assert self.assumption_pred_model is not None
             assert self.state_scaler is not None
 
-            g_description = PRISONERS_G_DESCRIPTIONS[self.expert_to_use.name]
+            g_description = RG_G_DESCRIPTIONS[self.expert_to_use.name]
 
             state_input = [actions.index(state.actions[self.player]),
                            actions.index(state.actions[1 - self.player]),

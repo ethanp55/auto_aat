@@ -8,7 +8,7 @@ from repeated_games.agents.alegaatr import ESTIMATES_LOOKBACK, TRAIN_RANDOM_PROB
     distance_func, AssumptionChecker, Assumptions
 from repeated_games.agents.cfr import CFRAgent
 from utils.utils import CHICKEN_E_DESCRIPTION, COORD_E_DESCRIPTION, P1, P2, PAD_VAL, PRISONERS_E_DESCRIPTION, \
-    PRISONERS_G_DESCRIPTIONS, NETWORK_NAME
+    RG_G_DESCRIPTIONS, NETWORK_NAME
 import numpy as np
 from copy import deepcopy
 import pickle
@@ -18,7 +18,7 @@ from collections import deque
 from tensorflow.keras.models import load_model
 import time
 
-game = PrisonersDilemma()
+game = ChickenGame()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)
@@ -79,7 +79,7 @@ for use_random_switching in [True, False]:
         for expert_key in experts.keys():
             expert_agent = deepcopy(experts[expert_key])
             expert_training_data = []
-            g_description = PRISONERS_G_DESCRIPTIONS[expert_key]
+            g_description = RG_G_DESCRIPTIONS[expert_key]
 
             for opponent_key in opponents.keys():
                 opp_name = 'opp'

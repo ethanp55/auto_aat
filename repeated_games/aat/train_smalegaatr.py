@@ -2,6 +2,8 @@ from repeated_games.agents.smalegaatr import AutoAATHead, AutoAATWithHead
 import numpy as np
 import os
 import pickle
+from repeated_games.chicken_game import ChickenGame
+from repeated_games.coordination_game import CoordinationGame
 from repeated_games.prisoners_dilemma import PrisonersDilemma
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
@@ -9,17 +11,20 @@ from tensorflow.keras.losses import MeanSquaredError
 from tensorflow.keras.metrics import MeanSquaredError as MeanSquaredErrorMetric
 from tensorflow.keras.models import load_model, Model
 from tensorflow.keras.optimizers import Adam
-from utils.utils import PRISONERS_E_DESCRIPTION, PRISONERS_G_DESCRIPTIONS, NETWORK_NAME
+from utils.utils import CHICKEN_E_DESCRIPTION, COORD_E_DESCRIPTION, PRISONERS_E_DESCRIPTION, RG_G_DESCRIPTIONS, \
+    NETWORK_NAME
 
 
 N_EPOCHS = 50
 VALIDATION_PERCENTAGE = 0.3
 EARLY_STOP = int(N_EPOCHS * 0.1)
 BATCH_SIZE = 512
-game = PrisonersDilemma()
+game = ChickenGame()
 game_name = str(game)
 training_data_folder = f'../aat/training_data/{game_name}/'
 states, labels, g_text = None, None, []
+DESCRIPTION = PRISONERS_E_DESCRIPTION if game_name == 'prisoners_dilemma_game' else \
+    (CHICKEN_E_DESCRIPTION if game_name == 'chicken_game' else COORD_E_DESCRIPTION)
 
 for file in os.listdir(training_data_folder):
     if 'states' not in file and 'rewards' not in file:
@@ -30,7 +35,7 @@ for file in os.listdir(training_data_folder):
 
     if is_state:
         name = file.split('_')[0]
-        g_text.extend([PRISONERS_G_DESCRIPTIONS[name]] * data.shape[0])
+        g_text.extend([RG_G_DESCRIPTIONS[name]] * data.shape[0])
 
         if states is None:
             states = data
@@ -57,9 +62,9 @@ train_indices = indices[n_val:]
 assert len(val_indices) == n_val
 assert len(train_indices) == n_samples - n_val
 states_train, y_train = states[train_indices, :], labels[train_indices,]
-g_text_train, e_text_train = g_text[train_indices, ], np.array([PRISONERS_E_DESCRIPTION] * len(states_train))
+g_text_train, e_text_train = g_text[train_indices, ], np.array([DESCRIPTION] * len(states_train))
 states_val, y_val = states[val_indices, :], labels[val_indices,]
-g_text_val, e_text_val = g_text[val_indices], np.array([PRISONERS_E_DESCRIPTION] * len(states_val))
+g_text_val, e_text_val = g_text[val_indices], np.array([DESCRIPTION] * len(states_val))
 assert states_train.shape[0] == g_text_train.shape[0] == e_text_train.shape[0] == y_train.shape[0]
 assert states_val.shape[0] == g_text_val.shape[0] == e_text_val.shape[0] == y_val.shape[0]
 print(states_train.shape, g_text_train.shape, e_text_train.shape, y_train.shape)

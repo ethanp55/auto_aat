@@ -535,10 +535,11 @@ class AlegAATr(Agent):
             self.prev_p.append(new_assumptions[5])
             self.prev_u.append(new_assumptions[6])
 
-            self.tracked_vector = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
-                                                              np.array(description).reshape(1, -1),
-                                                              state_input_scaled),
-                                                             return_transformed_state=True).numpy().reshape(-1, )
+            # self.tracked_vector = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+            #                                                   np.array(description).reshape(1, -1),
+            #                                                   state_input_scaled),
+            #                                                  return_transformed_state=True).numpy().reshape(-1, )
+            self.tracked_vector = new_assumptions.reshape(-1, )
 
         elif self.auto_aat_tuned:
             assert self.assumption_pred_model is not None
@@ -565,10 +566,11 @@ class AlegAATr(Agent):
             self.prev_p.append(new_assumptions[5])
             self.prev_u.append(new_assumptions[6])
 
-            self.tracked_vector = self.assumption_pred_model.auto_aat_model((np.array(g_description).reshape(1, -1),
-                                                              np.array(description).reshape(1, -1),
-                                                              state_input_scaled),
-                                                             return_transformed_state=True).numpy().reshape(-1, )
+            # self.tracked_vector = self.assumption_pred_model.auto_aat_model((np.array(g_description).reshape(1, -1),
+            #                                                   np.array(description).reshape(1, -1),
+            #                                                   state_input_scaled),
+            #                                                  return_transformed_state=True).numpy().reshape(-1, )
+            self.tracked_vector = new_assumptions.reshape(-1, )
 
         else:
             new_assumptions = self.assumption_checker.estimate_assumptions(prev_rewards, prev_opp_rewards, round_num,

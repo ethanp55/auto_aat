@@ -51,7 +51,7 @@ def create_opponent_agents(player_idx):
     return opponents
 
 
-n_epochs = 1
+n_epochs = 50
 min_rounds = 50
 max_rounds = 100
 possible_rounds = list(range(min_rounds, max_rounds + 1))

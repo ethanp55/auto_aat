@@ -9,7 +9,7 @@ from copy import deepcopy
 import pandas as pd
 import csv
 
-game = ChickenGame()
+game = CoordinationGame()
 
 ACTIONS = pd_actions if str(game) == 'prisoners_dilemma_game' else \
     (chicken_actions if str(game) == 'chicken_game' else coord_actions)
@@ -23,7 +23,7 @@ possible_rounds = list(range(min_rounds, max_rounds + 1))
 total_rewards_1 = []
 total_rewards_2 = []
 
-vector_file = f'../../analysis/{str(game)}_vectors/SMalegAATr_self_play.csv'
+vector_file = f'../../analysis/{str(game)}_vectors/SMAlegAATr_self_play.csv'
 with open(vector_file, 'w', newline='') as _:
     pass
 

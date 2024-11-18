@@ -66,7 +66,10 @@ class AutoAATWithHead(Model):
              return_transformed_state: bool = False) -> tf.Tensor:
         aat_vec = self.auto_aat_model(data_tup, training=training)
 
-        return self.auto_aat_head(aat_vec, return_transformed_state=return_transformed_state)
+        if return_transformed_state:
+            return aat_vec
+
+        return self.auto_aat_head(aat_vec)
 
 
 class SMAlegAATr(Agent):

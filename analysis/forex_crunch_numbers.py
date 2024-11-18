@@ -173,7 +173,7 @@ def crunch_numbers() -> None:
 
         avgs = [arry.mean() for arry in all_profs]
         standard_errors = [arry.std() / len(arry) ** 0.5 for arry in all_profs]
-        bar_colors = ['blue', 'green', 'red']
+        bar_colors = ['blue', 'green', 'red', 'orange']
         plt.grid()
         plt.bar(names, avgs, yerr=standard_errors, color=bar_colors)
         plt.xlabel('Strategy')

@@ -10,7 +10,7 @@ from copy import deepcopy
 import pandas as pd
 import csv
 
-game = ChickenGame()
+game = CoordinationGame()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)

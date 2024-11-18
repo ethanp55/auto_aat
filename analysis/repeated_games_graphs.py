@@ -3,7 +3,9 @@ import matplotlib.pyplot as plt
 
 
 # for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']:
-for game_name in ['prisoners_dilemma_game']:
+for game_name in ['coordination_game']:
+    all_vals_df = pd.DataFrame([])
+
     # Train (expert pool)
     algaater_compressed = pd.read_csv(f'../analysis/{game_name}/algaater_compressed.csv')
     algaater_compressed['Agent'] = ['AlegAATr'] * len(algaater_compressed)
@@ -25,6 +27,7 @@ for game_name in ['prisoners_dilemma_game']:
                              smalegaatr_compressed], axis=0, ignore_index=True)
     combined_df.to_csv(f'../analysis/{game_name}/combined_compressed.csv')
     combined_df.reset_index(drop=True, inplace=True)
+    all_vals_df = pd.concat([all_vals_df, combined_df], axis=0, ignore_index=True)
 
     plt.grid()
     plt.boxplot([algaater_compressed['Rewards'], algaater_auto_compressed['Rewards'],
@@ -57,11 +60,12 @@ for game_name in ['prisoners_dilemma_game']:
                                  ignore_index=True)
     combined_df_test.to_csv(f'../analysis/{game_name}/combined_compressed_test.csv')
     combined_df_test.reset_index(drop=True, inplace=True)
+    all_vals_df = pd.concat([all_vals_df, combined_df_test], axis=0, ignore_index=True)
 
     plt.grid()
     plt.boxplot([algaater_compressed_test['Rewards'], algaater_auto_compressed_test['Rewards'],
                  algaater_auto_tuned_compressed_test['Rewards'], smalegaatr_compressed_test['Rewards']],
-                labels=['AlgAATer', 'AlegAAATr', 'AlegAAATTr' 'SMAlegAATr'])
+                labels=['AlgAATer', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr'])
     plt.xlabel('Agent', fontsize=16, fontweight='bold')
     plt.ylabel('Rewards', fontsize=16, fontweight='bold')
     plt.savefig(f'../analysis/{game_name}/agent_rewards_test.png', bbox_inches='tight')
@@ -90,6 +94,7 @@ for game_name in ['prisoners_dilemma_game']:
                                  ignore_index=True)
     combined_df_test.to_csv(f'../analysis/{game_name}/combined_compressed_test_changers.csv')
     combined_df_test.reset_index(drop=True, inplace=True)
+    all_vals_df = pd.concat([all_vals_df, combined_df_test], axis=0, ignore_index=True)
 
     plt.grid()
     plt.boxplot([algaater_compressed_test['Rewards'], algaater_auto_compressed_test['Rewards'],
@@ -121,6 +126,7 @@ for game_name in ['prisoners_dilemma_game']:
                              smalegaatr_compressed_test], axis=0, ignore_index=True)
     combined_df.to_csv(f'../analysis/{game_name}/combined_self_play.csv')
     combined_df.reset_index(drop=True, inplace=True)
+    all_vals_df = pd.concat([all_vals_df, combined_df], axis=0, ignore_index=True)
 
     plt.boxplot([algaater_compressed['Rewards'], algaater_auto_compressed['Rewards'],
                  algaater_auto_tuned_compressed['Rewards'], smalegaatr_compressed_test['Rewards']],
@@ -195,12 +201,37 @@ for game_name in ['prisoners_dilemma_game']:
                              smalegaatr_compressed], axis=0, ignore_index=True)
     combined_df.to_csv(f'../analysis/{game_name}/combined_compressed_smart.csv')
     combined_df.reset_index(drop=True, inplace=True)
+    all_vals_df = pd.concat([all_vals_df, combined_df], axis=0, ignore_index=True)
 
     plt.grid()
     plt.boxplot([algaater_compressed['Rewards'], algaater_auto_compressed['Rewards'],
                  algaater_auto_tuned_compressed['Rewards'], smalegaatr_compressed['Rewards']],
-                labels=['AlegAATr', 'AlegAAATr', 'SMAlegAATr'])
+                labels=['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr'])
     plt.xlabel('Agent', fontsize=16, fontweight='bold')
     plt.ylabel('Rewards', fontsize=16, fontweight='bold')
     plt.savefig(f'../analysis/{game_name}/agent_rewards_smart.png', bbox_inches='tight')
+    plt.clf()
+
+    # Overall
+    plt.grid()
+    plt.boxplot([all_vals_df[all_vals_df['Agent'] == 'AlegAATr']['Rewards'],
+                 all_vals_df[all_vals_df['Agent'] == 'AlegAAATr']['Rewards'],
+                 all_vals_df[all_vals_df['Agent'] == 'AlegAAATTr']['Rewards'],
+                 all_vals_df[all_vals_df['Agent'] == 'SMAlegAATr']['Rewards']],
+                labels=['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr'])
+    plt.xlabel('Agent', fontsize=16, fontweight='bold')
+    plt.ylabel('Rewards', fontsize=16, fontweight='bold')
+    plt.savefig(f'../analysis/{game_name}/agent_rewards_overall.png', bbox_inches='tight')
+    plt.clf()
+
+    average_rewards_by_alg = all_vals_df.groupby('Agent')['Rewards'].agg(
+        ['mean', 'sem']).reset_index()
+    plt.figure(figsize=(10, 3))
+    plt.grid()
+    bar_colors = ['blue', 'green', 'red', 'orange']
+    plt.bar(average_rewards_by_alg['Agent'], average_rewards_by_alg['mean'],
+            yerr=average_rewards_by_alg['sem'], capsize=5, color=bar_colors)
+    plt.xlabel('Agent', fontsize=16, fontweight='bold')
+    plt.ylabel('Reward', fontsize=16, fontweight='bold')
+    plt.savefig(f'../analysis/{game_name}/agent_rewards_overall_bars.png', bbox_inches='tight')
     plt.clf()

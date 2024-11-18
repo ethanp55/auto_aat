@@ -7,7 +7,7 @@ from sklearn.manifold import TSNE
 from typing import List
 
 
-FILE_ADJ = 'forex'
+FILE_ADJ = 'coordination_game'
 
 
 def _plot_embeddings(labels: List[str], embeddings: np.array, agent_name: str, three_dimensions: bool = False) -> None:
@@ -42,7 +42,17 @@ gen_vectors = {}
 agents_to_include = ['AlegAATr', 'AlegAAATr', 'SMAlegAATr', 'AlegAAATTr']
 
 for file in os.listdir(folder):
-    agent_name = file.split('_')[0]
+    if 'Alegaatr1' in file and 'auto_tuned' in file:
+        agent_name = 'AlegAAATTr'
+
+    elif 'Alegaatr1' in file and 'auto' in file:
+        agent_name = 'AlegAAATr'
+
+    elif 'Alegaatr1' in file:
+        agent_name = 'AlegAATr'
+
+    else:
+        agent_name = file.split('_')[0]
     if agent_name not in agents_to_include:
         continue
     file_path = f'{folder}{file}'

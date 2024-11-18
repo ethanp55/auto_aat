@@ -33,3 +33,25 @@ FOREX_G_DESCRIPTIONS = {
     'Stochastic': 'Generator that looks for stochastic crossover',
     'Supertrend': 'Generator that looks for shifts in supertrend lines'
 }
+HARE_NAME = 'hare'
+STAG_NAME = 'stag'
+AVAILABLE = -1  # A cell in the grid with this value means it is available/not taken
+VERTICAL, HORIZONTAL = 'vertical', 'horizontal'
+POSSIBLE_MOVEMENTS = [VERTICAL, HORIZONTAL]  # Up/down, left/right
+POSSIBLE_DELTA_VALS = [-1, 0, 1]  # Left/down, stay, right/up
+MAX_MOVEMENT_UNITS = 1
+LEFT, RIGHT, UP, DOWN, NONE = 0, 1, 2, 3, 4
+HARE_REWARD = 10
+STAG_REWARD = 60
+N_REQUIRED_TO_CAPTURE_HARE = 1
+N_REQUIRED_TO_CAPTURE_STAG = 3
+N_HUNTERS = 3
+STAG_HARE_E_DESCRIPTION = 'A two-dimensional grid environment where three hunters can hunt a hare or work together to ' \
+                          'hunt a stag'
+STAG_HARE_G_DESCRIPTIONS = [
+    'Generator that greedily pursues the hare',
+    'Generator that greedily pursues the hare but tries to plan against collisions',
+    'Generator that greedily pursues the stag but tries to plan against collisions',
+    'Generator that intelligently pursues the stag and tries to plan against collisions and help its team members'
+]
+

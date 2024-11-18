@@ -16,20 +16,21 @@ adjustment = '_enh' if ENHANCED else ''
 N_EPOCHS = 50
 VALIDATION_PERCENTAGE = 0.3
 EARLY_STOP = int(N_EPOCHS * 0.1)
-BATCH_SIZE = 512
+BATCH_SIZE = 16
 training_data_folder = '../aat/training_data/'
 states, labels, g_text = None, None, []
 DESCRIPTION = STAG_HARE_E_DESCRIPTION
 
 for file in os.listdir(training_data_folder):
-    if ('sin_c' not in file) or (ENHANCED and '_enh' not in file) or (not ENHANCED and '_enh' in file):
+    if ('sin_c' not in file) or (ENHANCED and '_enh' not in file) or (not ENHANCED and '_enh' in file) \
+            or 'vectors' in file:
         continue
 
-    data = np.array(pickle.load(open(f'{training_data_folder}{file}', 'rb')))
+    data = np.genfromtxt(f'{training_data_folder}{file}', delimiter=',', skip_header=0)
     is_state = 'states' in file
 
     if is_state:
-        gen_idx = file.split('_')[1]
+        gen_idx = int(file.split('_')[1])
         g_text.extend([STAG_HARE_G_DESCRIPTIONS[gen_idx]] * data.shape[0])
 
         if states is None:

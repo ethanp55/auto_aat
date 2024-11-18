@@ -44,7 +44,10 @@ class AlegAATr(Agent):
             if (enhanced and '_enh' not in file) or (not enhanced and '_enh' in file):
                 continue
 
-            if (self.auto_aat_tuned and 'auto_tuned' not in file) or (self.auto_aat and 'auto' not in file):
+            if self.auto_aat_tuned and 'auto_tuned' not in file:
+                continue
+
+            elif self.auto_aat and ('auto' not in file or 'tuned' in file):
                 continue
 
             generator_idx = int(file.split('_')[1])
@@ -123,9 +126,13 @@ class AlegAATr(Agent):
                 best_vector = x_scaled if not use_emp_rewards else None
 
         self.generator_to_use_idx = best_generator_idx
-        best_vector = best_vector.reshape(-1, 1)
-        n_zeroes = 10 - best_vector.shape[0]
-        best_vector = np.append(best_vector, np.zeros(n_zeroes)).reshape(1, -1)
+
+        if not self.auto_aat and not self.auto_aat_tuned:
+            best_vector = best_vector.reshape(-1, 1)
+            n_zeroes = 10 - best_vector.shape[0]
+            best_vector = np.append(best_vector, np.zeros(n_zeroes)).reshape(1, -1)
+        else:
+            best_vector = best_vector.reshape(1, -1)
         self.tracked_vector = best_vector[0, :]
 
         # Update how many rounds it has been since each generator has been used

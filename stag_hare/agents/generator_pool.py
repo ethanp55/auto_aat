@@ -47,30 +47,27 @@ class GeneratorPool(Agent):
 
             # Grab the assumption estimates, if we're tracking them
             if self.check_assumptions:
-                curr_state = self.state
+                curr_state = list(self.state)
+                curr_state += [PAD_VAL] * (300 - len(curr_state))
 
-                # AlegAATr and SMAlegAATr
-                assumps = self.assumptions(self.generator_just_used_idx)
+                # # AlegAATr (and SMAlegAATr, though it doesn't use these vectors)
+                # assumps = self.assumptions(self.generator_just_used_idx)
 
                 # # AlegAAATr
-                # state_input = list(curr_state)
-                # state_input += [PAD_VAL] * (300 - len(state_input))
-                # state_input_scaled = self.state_scaler.scale(np.array(state_input).reshape(1, -1))
+                # state_input_scaled = self.state_scaler.scale(np.array(curr_state).reshape(1, -1))
                 # g_description = STAG_HARE_G_DESCRIPTIONS[self.generator_just_used_idx]
                 # assumps = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
                 #                                          np.array(STAG_HARE_E_DESCRIPTION).reshape(1, -1),
-                #                                          state_input_scaled)).numpy()
+                #                                          state_input_scaled)).numpy()[0]
                 # assumps = list(assumps)
-                #
-                # # AlegAAATTr
-                # state_input = list(curr_state)
-                # state_input += [PAD_VAL] * (300 - len(state_input))
-                # state_input_scaled = self.pred_scaler.transform(np.array(state_input).reshape(1, -1))
-                # g_description = STAG_HARE_G_DESCRIPTIONS[self.generator_just_used_idx]
-                # assumps = self.pred_model.auto_aat_model((np.array(g_description).reshape(1, -1),
-                #                                              np.array(STAG_HARE_E_DESCRIPTION).reshape(1, -1),
-                #                                              state_input_scaled)).numpy()
-                # assumps = list(assumps)
+
+                # AlegAAATTr
+                state_input_scaled = self.pred_scaler.transform(np.array(curr_state).reshape(1, -1))
+                g_description = STAG_HARE_G_DESCRIPTIONS[self.generator_just_used_idx]
+                assumps = self.pred_model.auto_aat_model((np.array(g_description).reshape(1, -1),
+                                                             np.array(STAG_HARE_E_DESCRIPTION).reshape(1, -1),
+                                                             state_input_scaled)).numpy()[0]
+                assumps = list(assumps)
 
                 tup = (assumps, round_num, generator_just_used.baseline, None)
 

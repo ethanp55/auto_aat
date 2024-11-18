@@ -11,6 +11,7 @@ generator_to_alignment_vectors, generator_to_correction_terms = {}, {}
 training_data_folder = '../aat/training_data/'
 enhanced = True
 adjustment = '_enh' if enhanced else ''
+auto_adjustment = '_auto_tuned'
 
 for file in os.listdir(training_data_folder):
     if (enhanced and '_enh' not in file) or (not enhanced and '_enh' in file) or 'sin_c' in file:
@@ -45,7 +46,8 @@ for generator_idx, x in generator_to_alignment_vectors.items():
     k_values, cv_scores = range(1, int(len(x_scaled) ** 0.5) + 1), []
     for k in k_values:
         knn = KNeighborsRegressor(n_neighbors=k, weights='distance')
-        scores = cross_val_score(knn, x_scaled, y, cv=5, scoring='neg_mean_squared_error')
+        n_folds = min(x_scaled.shape[0], 5)
+        scores = cross_val_score(knn, x_scaled, y, cv=n_folds, scoring='neg_mean_squared_error')
         cv_scores.append(scores.mean())
     n_neighbors = k_values[np.argmax(cv_scores)]
 
@@ -53,10 +55,10 @@ for generator_idx, x in generator_to_alignment_vectors.items():
     knn = KNeighborsRegressor(n_neighbors=n_neighbors, weights='distance')
     knn.fit(x_scaled, y)
 
-    with open(f'../aat/knn_models/generator_{generator_idx}_knn{adjustment}.pickle', 'wb') as f:
+    with open(f'../aat/knn_models/generator_{generator_idx}_knn{adjustment}{auto_adjustment}.pickle', 'wb') as f:
         pickle.dump(knn, f)
 
-    with open(f'../aat/knn_models/generator_{generator_idx}_scaler{adjustment}.pickle', 'wb') as f:
+    with open(f'../aat/knn_models/generator_{generator_idx}_scaler{adjustment}{auto_adjustment}.pickle', 'wb') as f:
         pickle.dump(scaler, f)
 
     # Print metrics and best number of neighbors

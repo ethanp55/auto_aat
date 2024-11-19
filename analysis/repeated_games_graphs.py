@@ -226,6 +226,9 @@ for game_name in ['coordination_game']:
 
     average_rewards_by_alg = all_vals_df.groupby('Agent')['Rewards'].agg(
         ['mean', 'sem']).reset_index()
+    order = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr']
+    average_rewards_by_alg['Agent'] = pd.Categorical(average_rewards_by_alg['Agent'], categories=order, ordered=True)
+    average_rewards_by_alg = average_rewards_by_alg.sort_values('Agent').reset_index(drop=True)
     plt.figure(figsize=(10, 3))
     plt.grid()
     bar_colors = ['blue', 'green', 'red', 'orange']

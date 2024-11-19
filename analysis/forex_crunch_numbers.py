@@ -160,9 +160,9 @@ def crunch_numbers() -> None:
             print()
 
         all_profs, names = [], []
-
-        for strategy, profits in sorted(all_profits.items(), key=lambda item: sum(item[1]) / len(item[1]),
-                                        reverse=True):
+        order = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr']
+        for strategy in order:
+            profits = all_profits[strategy]
             profits_array = np.array(profits)
             avg, sd = profits_array.mean(), profits_array.std()
             print(f'{strategy}\'s avg profit: {avg}, med profit: {np.median(profits_array)}, '
@@ -174,10 +174,11 @@ def crunch_numbers() -> None:
         avgs = [arry.mean() for arry in all_profs]
         standard_errors = [arry.std() / len(arry) ** 0.5 for arry in all_profs]
         bar_colors = ['blue', 'green', 'red', 'orange']
+        plt.figure(figsize=(10, 3))
         plt.grid()
-        plt.bar(names, avgs, yerr=standard_errors, color=bar_colors)
-        plt.xlabel('Strategy')
-        plt.ylabel('Amount ($)')
+        plt.bar(names, avgs, yerr=standard_errors, capsize=5, color=bar_colors)
+        plt.xlabel('Strategy', fontsize=16, fontweight='bold')
+        plt.ylabel('Amount ($)', fontsize=16, fontweight='bold')
         plt.savefig(f'../analysis/forex_figures/avg_profit_amounts.png', bbox_inches='tight')
         plt.clf()
 

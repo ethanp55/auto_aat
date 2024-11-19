@@ -41,13 +41,18 @@ class AlegAATr(Agent):
         folder = '../aat/knn_models/'
 
         for file in os.listdir(folder):
+            # Account for enhanced vs. not enhanced
             if (enhanced and '_enh' not in file) or (not enhanced and '_enh' in file):
                 continue
 
+            # Account for auto AAT, auto AAT tuned, and regular/plain AAT
             if self.auto_aat_tuned and 'auto_tuned' not in file:
                 continue
 
             elif self.auto_aat and ('auto' not in file or 'tuned' in file):
+                continue
+
+            elif not self.auto_aat and not self.auto_aat_tuned and 'auto' in file:
                 continue
 
             generator_idx = int(file.split('_')[1])

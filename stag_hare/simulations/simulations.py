@@ -20,7 +20,7 @@ print(n_training_iterations, progress_percentage_chunk)
 n_other_hunters = N_HUNTERS - 1
 
 # names = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr']
-names = ['SMAlegAATr']
+names = ['AlegAAATTr']
 
 # Reset any existing simulation files (opening a file in write mode will truncate it)
 for file in os.listdir('../../analysis/stag_hare_results/'):
@@ -53,14 +53,14 @@ for epoch in range(N_EPOCHS):
             agents_to_test = []
             # agents_to_test.append(AlegAATr(lmbda=0.0, enhanced=True))
             # agents_to_test.append(AlegAATr(name='AlegAAATr', lmbda=0.0, enhanced=True, auto_aat=True))
-            # agents_to_test.append(AlegAATr(name='AlegAAATTr', lmbda=0.0, enhanced=True, auto_aat_tuned=True))
-            agents_to_test.append(SMAlegAATr(enhanced=True))
+            agents_to_test.append(AlegAATr(name='AlegAAATTr', lmbda=0.0, enhanced=False, auto_aat_tuned=True))
+            # agents_to_test.append(SMAlegAATr(enhanced=True))
 
             self_play_agents = []
             # self_play_agents.append([AlegAATr(f'AlegAATr{i}', lmbda=0.0, enhanced=True) for i in range(n_other_hunters)])
             # self_play_agents.append([AlegAATr(f'AlegAAATr{i}', lmbda=0.0, enhanced=True, auto_aat=True) for i in range(n_other_hunters)])
-            # self_play_agents.append([AlegAATr(f'AlegAAATTr{i}', lmbda=0.0, enhanced=True, auto_aat_tuned=True) for i in range(n_other_hunters)])
-            self_play_agents.append([SMAlegAATr(f'SMAlegAATr{i}', enhanced=True) for i in range(n_other_hunters)])
+            self_play_agents.append([AlegAATr(f'AlegAAATTr{i}', lmbda=0.0, enhanced=False, auto_aat_tuned=True) for i in range(n_other_hunters)])
+            # self_play_agents.append([SMAlegAATr(f'SMAlegAATr{i}', enhanced=True) for i in range(n_other_hunters)])
 
             for i, agent_to_test in enumerate(agents_to_test):
                 if label == 'selfplay':

@@ -15,6 +15,7 @@ def _plot_embeddings(labels: List[str], embeddings: np.array, agent_name: str, t
     unique_labels = np.unique(labels)
     colors = plt.get_cmap('tab20')(Normalize()([idx for idx in range(len(unique_labels))]))
     fig = plt.figure(figsize=(15, 15))
+    # fig = plt.figure(figsize=(3, 3))
     plt.grid()
 
     if three_dimensions:
@@ -30,8 +31,9 @@ def _plot_embeddings(labels: List[str], embeddings: np.array, agent_name: str, t
             label_points = embeddings[labels == label]
             plt.scatter(label_points[:, 0], label_points[:, 1], s=10, alpha=1.0, color=colors[j], label=label)
 
+    # plt.tick_params(axis='both', which='both', bottom=False, top=False, labelbottom=False, left=False, right=False,
+    #                 labelleft=False)
     plt.legend(loc='best', fontsize='18')
-
     image_name_adj = '_3d' if three_dimensions else ''
     plt.savefig(f'../analysis/vector_plots/{agent_name}{image_name_adj}_{FILE_ADJ}.png', bbox_inches='tight')
     plt.clf()

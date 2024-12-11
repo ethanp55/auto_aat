@@ -32,7 +32,7 @@ n_epochs_without_change = 0
 
 # Grab the data
 states, g_text, e_text, n_assumptions, a_vectors = \
-    DataHandler.extract_domain_data(domain='jhg', augment_states=True, augment_e_descriptions=True)
+    DataHandler.extract_domain_data(domain='chicken', augment_states=True, augment_e_descriptions=True)
 
 # Calculate how many samples to use for training and validation (and, as a result, testing)
 n_samples = states.shape[0]
@@ -117,6 +117,9 @@ for epoch in range(N_EPOCHS):
         with tf.GradientTape() as tape:
             predictions = model((curr_g_text, curr_e_text, curr_state), training=True)
             loss = loss_fn(*_mask_output(curr_y, predictions))
+            # print(curr_y)
+            # print(predictions)
+            # print()
 
         grads = tape.gradient(loss, model.trainable_weights)
         optimizer.apply_gradients(zip(grads, model.trainable_weights))

@@ -513,8 +513,8 @@ class AlegAATr(Agent):
             assert self.assumption_pred_model is not None
             assert self.state_scaler is not None
 
-            # g_description = PRISONERS_G_DESCRIPTIONS[self.expert_to_use.name]
-            g_description = 'Generator for playing the prisoner\'s dilemma game'
+            g_description = RG_G_DESCRIPTIONS[self.expert_to_use.name]
+            # g_description = 'Generator for playing the prisoner\'s dilemma game'
 
             state_input = [actions.index(state.actions[self.player]),
                            actions.index(state.actions[1 - self.player]),

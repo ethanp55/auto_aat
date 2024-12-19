@@ -148,35 +148,37 @@ class AlegAATr(Strategy):
 
         if self.auto_aat:
             assert self.assumption_pred_model is not None and self.state_scaler is not None
-            g_description = 'Generator that represents a trading strategy'
-            state_input = strategy_data.loc[strategy_data.index[curr_idx - 1], ['Mid_Open', 'Mid_High', 'Mid_Low', 'Mid_Close', 'Volume',
-                                                          'atr', 'lower_atr_band', 'upper_atr_band', 'ema200',
-                                                          'ema100', 'ema50', 'smma200', 'smma100', 'smma50',
-                                                          'bid_pips_down', 'bid_pips_up', 'ask_pips_down',
-                                                          'ask_pips_up', 'rsi', 'rsi_sma', 'adx', 'chop', 'vo',
-                                                          'rsi_up', 'adx_large', 'chop_small', 'vo_positive',
-                                                          'squeeze_on', 'macd', 'macdsignal', 'macdhist', 'beep_boop',
-                                                          'support_fractal', 'resistance_fractal', 'sar', 'lower_kc',
-                                                          'upper_kc', 'lower_bb', 'upper_bb', 'qqe_up', 'qqe_down',
-                                                          'qqe_val', 'supertrend', 'supertrend_ub', 'supertrend_lb',
-                                                          'slowk', 'slowd', 'slowk_rsi', 'slowd_rsi', 'n_macd',
-                                                          'n_macdsignal', 'impulse_macd', 'impulse_macdsignal']]
-            state_input = list(state_input)
-            state_input += [PAD_VAL] * (300 - len(state_input))
-            state_input_scaled = self.state_scaler.scale(np.array(state_input, dtype=float).reshape(1, -1))
-            assumption_preds = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
-                                                           np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
-                                                           state_input_scaled)).numpy()
-            assumption_preds = list(assumption_preds[0, :34])
-            assumption_preds.append(0.0)
-            new_assumptions = Assumptions(strategy_data, curr_idx, currency_pair, 0.0, calculate=False)
-            new_assumptions.set_vals(*assumption_preds)
 
-            tracked_vectors.append(self.assumption_pred_model((np.array(g_description).reshape(1, -1),
-                                                              np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
-                                                              state_input_scaled),
-                                                             return_transformed_state=True).numpy().reshape(-1, ))
-            vectors.append(np.array(new_assumptions.create_aat_tuple()[:-1], dtype=float).reshape(1, -1))
+            for gen in self.generators:
+                g_description = FOREX_G_DESCRIPTIONS[gen.name]
+                state_input = strategy_data.loc[strategy_data.index[curr_idx - 1], ['Mid_Open', 'Mid_High', 'Mid_Low', 'Mid_Close', 'Volume',
+                                                              'atr', 'lower_atr_band', 'upper_atr_band', 'ema200',
+                                                              'ema100', 'ema50', 'smma200', 'smma100', 'smma50',
+                                                              'bid_pips_down', 'bid_pips_up', 'ask_pips_down',
+                                                              'ask_pips_up', 'rsi', 'rsi_sma', 'adx', 'chop', 'vo',
+                                                              'rsi_up', 'adx_large', 'chop_small', 'vo_positive',
+                                                              'squeeze_on', 'macd', 'macdsignal', 'macdhist', 'beep_boop',
+                                                              'support_fractal', 'resistance_fractal', 'sar', 'lower_kc',
+                                                              'upper_kc', 'lower_bb', 'upper_bb', 'qqe_up', 'qqe_down',
+                                                              'qqe_val', 'supertrend', 'supertrend_ub', 'supertrend_lb',
+                                                              'slowk', 'slowd', 'slowk_rsi', 'slowd_rsi', 'n_macd',
+                                                              'n_macdsignal', 'impulse_macd', 'impulse_macdsignal']]
+                state_input = list(state_input)
+                state_input += [PAD_VAL] * (300 - len(state_input))
+                state_input_scaled = self.state_scaler.scale(np.array(state_input, dtype=float).reshape(1, -1))
+                assumption_preds = self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+                                                               np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
+                                                               state_input_scaled)).numpy()
+                assumption_preds = list(assumption_preds[0, :34])
+                assumption_preds.append(0.0)
+                new_assumptions = Assumptions(strategy_data, curr_idx, currency_pair, 0.0, calculate=False)
+                new_assumptions.set_vals(*assumption_preds)
+
+                tracked_vectors.append(self.assumption_pred_model((np.array(g_description).reshape(1, -1),
+                                                                  np.array(FOREX_E_DESCRIPTION).reshape(1, -1),
+                                                                  state_input_scaled),
+                                                                 return_transformed_state=True).numpy().reshape(-1, ))
+                vectors.append(np.array(new_assumptions.create_aat_tuple()[:-1], dtype=float).reshape(1, -1))
 
         elif self.auto_aat_tuned:
             assert self.model is not None and self.scaler is not None

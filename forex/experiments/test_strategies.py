@@ -18,17 +18,16 @@ def test_strategies() -> None:
                 pair_time_frame_year_str = f'{currency_pair}_{time_frame}_{year}'
                 print(pair_time_frame_year_str)
 
-                # # RUN SMALEGAATR (FINE-TUNED AUTO AAT)
-                # print(pair_time_frame_year_str)
-                # smalegaatr = SMAlegAATr()
-                # result = SimulationRunner.run_simulation(smalegaatr, currency_pair, time_frame, year, False, False,
-                #                                          metrics_tracker)
-                # print(result.net_reward)
-                #
-                # # Update the final results
-                # test_results.append((f'{smalegaatr.name}_{pair_time_frame_year_str}', result))
-                #
-                # print()
+                # RUN SMALEGAATR (FINE-TUNED AUTO AAT)
+                smalegaatr = SMAlegAATr()
+                result = SimulationRunner.run_simulation(smalegaatr, currency_pair, time_frame, year, False, False,
+                                                         metrics_tracker)
+                print(result.net_reward)
+
+                # Update the final results
+                test_results.append((f'{smalegaatr.name}_{pair_time_frame_year_str}', result))
+
+                print()
 
                 # RUN AlegAAATTr
                 alegaaattr = AlegAATr('AlegAAATTr', auto_aat_tuned=True)
@@ -41,23 +40,22 @@ def test_strategies() -> None:
 
                 print()
 
-                # # RUN ALEGAATR TWICE, ONCE WITH AUTO AAT (NO FINE-TUNING) AND ONCE WITHOUT
-                # for auto_aat in [True, False]:
-                #     name = 'AlegAAATr' if auto_aat else 'AlegAATr'
-                #     alegaatr = AlegAATr(name=name, auto_aat=auto_aat)
-                #
-                #     result = SimulationRunner.run_simulation(alegaatr, currency_pair, time_frame, year, False, False,
-                #                                              metrics_tracker)
-                #     print(result.net_reward)
-                #
-                #     # Update the final results
-                #     test_results.append((f'{alegaatr.name}_{pair_time_frame_year_str}', result))
-                #
-                #     print()
+                # RUN ALEGAATR TWICE, ONCE WITH AUTO AAT (NO FINE-TUNING) AND ONCE WITHOUT
+                for auto_aat in [True]:
+                    name = 'AlegAAATr' if auto_aat else 'AlegAATr'
+                    alegaatr = AlegAATr(name=name, auto_aat=auto_aat)
+
+                    result = SimulationRunner.run_simulation(alegaatr, currency_pair, time_frame, year, False, False,
+                                                             metrics_tracker)
+                    print(result.net_reward)
+
+                    # Update the final results
+                    test_results.append((f'{alegaatr.name}_{pair_time_frame_year_str}', result))
+
+                    print()
 
     # Save any metric data in order to perform analysis offline
-    # metrics_tracker.save_data(['QAlegAATr', 'AlegAATr', 'AlegAAATr'])
-    metrics_tracker.save_data(['AlegAAATTr'])
+    metrics_tracker.save_data(['SMAlegAATr', 'AlegAAATTr', 'AlegAAATr'])
 
     # Sort the results so that the most profitable results are first
     test_results.sort(key=lambda x: x[1].net_reward, reverse=True)

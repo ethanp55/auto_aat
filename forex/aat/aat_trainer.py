@@ -14,6 +14,7 @@ class AATTrainer:
             currency_pair, strategy_name, time_frame, year
         self.auto_aat = auto_aat
         self.auto_aat_tuned = auto_aat_tuned
+        # print(self.auto_aat, self.auto_aat_tuned)
         self.recent_tuple, self.training_data = None, []
         self.recent_state, self.states, self.trade_amounts = None, [], [] # For tuning auto AAT
 

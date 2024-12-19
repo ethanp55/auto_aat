@@ -19,7 +19,8 @@ from forex.utils.utils import CURRENCY_PAIRS, TIME_FRAMES, YEARS
 def train_aat() -> None:
     strategy_types = [BarMovement, BeepBoop, BollingerBands, Choc, KeltnerChannels, MACrossover, MACD, MACDKeyLevel,
                       MACDStochastic, PSAR, RSI, SqueezePro, Stochastic, Supertrend]
-    auto_aat_vals = [True]
+    auto_aat_vals = [False]
+    tuned = True
 
     for auto_aat in auto_aat_vals:
         for currency_pair in CURRENCY_PAIRS:
@@ -30,7 +31,7 @@ def train_aat() -> None:
                     for strategy in strategies_to_train:
                         SimulationRunner.run_simulation(strategy=strategy, currency_pair=currency_pair,
                                                         time_frame=time_frame, year=year, optimize=True,
-                                                        train_aat=True, auto_aat_tuned=True)
+                                                        train_aat=True, auto_aat=auto_aat, auto_aat_tuned=tuned)
 
 
 if __name__ == "__main__":

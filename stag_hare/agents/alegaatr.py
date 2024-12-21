@@ -16,7 +16,7 @@ class AlegAATr(Agent):
         Agent.__init__(self, name)
         self.auto_aat, self.auto_aat_tuned = auto_aat, auto_aat_tuned
         self.lmbda = lmbda
-        self.generator_pool = GeneratorPool(name, check_assumptions=True)
+        self.generator_pool = GeneratorPool(name, check_assumptions=True, no_baseline_labels=True)
         self.generator_indices = [i for i in range(len(self.generator_pool.generators))]
         self.generator_to_use_idx = None
         self.models, self.scalers = {}, {}

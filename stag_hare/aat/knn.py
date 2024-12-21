@@ -9,12 +9,12 @@ from sklearn.preprocessing import StandardScaler
 # Read in the training data
 generator_to_alignment_vectors, generator_to_correction_terms = {}, {}
 training_data_folder = '../aat/training_data/'
-enhanced = False
+enhanced = True
 adjustment = '_enh' if enhanced else ''
-auto_adjustment = '_auto'
+auto_adjustment = '_auto_tuned'
 
 for file in os.listdir(training_data_folder):
-    if (enhanced and '_enh' not in file) or (not enhanced and '_enh' in file) or 'sin_c' not in file:
+    if (enhanced and '_enh' not in file) or (not enhanced and '_enh' in file) or 'sin_c' not in file or 'states' in file:
         continue
 
     generator_idx = file.split('_')[1]
@@ -34,6 +34,7 @@ for generator_idx, vectors in generator_to_alignment_vectors.items():
 # Train KNN models for each generator
 for generator_idx, x in generator_to_alignment_vectors.items():
     y = generator_to_correction_terms[generator_idx]
+    print(y.shape)
 
     scaler = StandardScaler()
     x_scaled = scaler.fit_transform(x)

@@ -127,12 +127,12 @@ def run_training():
             for other_hunters in list_of_other_hunters:
                 assert len(other_hunters) == n_other_hunters
                 agents_to_train_on = []
-                agents_to_train_on.append(UniformSelector(check_assumptions=True, no_baseline=NO_BASELINE))
-                agents_to_train_on.append(FavorMoreRecent(check_assumptions=True, no_baseline=NO_BASELINE))
+                # agents_to_train_on.append(UniformSelector(check_assumptions=True, no_baseline=NO_BASELINE))
+                # agents_to_train_on.append(FavorMoreRecent(check_assumptions=True, no_baseline=NO_BASELINE))
                 # agents_to_train_on.append(AlegAATr(lmbda=0.0, train=True))
                 # agents_to_train_on.append(SMAlegAATr(train=True))
                 # agents_to_train_on.append(AlegAATr(name='AlegAAATr', lmbda=0.0, train=True, auto_aat=True))
-                # agents_to_train_on.append(AlegAATr(name='AlegAAATTr', lmbda=0.0, train=True, auto_aat_tuned=True))
+                agents_to_train_on.append(AlegAATr(name='AlegAAATTr', lmbda=0.0, train=True, auto_aat_tuned=True))
 
                 for agent_to_train_on in agents_to_train_on:
                     hunters = deepcopy(other_hunters)

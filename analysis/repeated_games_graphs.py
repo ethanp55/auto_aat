@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-# for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']:
-for game_name in ['coordination_game']:
+for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']:
+# for game_name in ['coordination_game']:
     all_vals_df = pd.DataFrame([])
 
     # Train (expert pool)

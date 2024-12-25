@@ -16,7 +16,7 @@ from repeated_games.agents.eee import EEE
 from repeated_games.agents.folk_egal import FolkEgalAgent, FolkEgalPunishAgent
 import csv
 
-game = CoordinationGame()
+game = PrisonersDilemma()
 
 baselines = pd_baselines if str(game) == 'prisoners_dilemma_game' else \
     (chicken_baselines if str(game) == 'chicken_game' else coord_baselines)

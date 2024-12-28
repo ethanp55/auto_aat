@@ -32,7 +32,14 @@ n_epochs_without_change = 0
 
 # Grab the data
 states, g_text, e_text, n_assumptions, a_vectors = \
+    DataHandler.extract_domain_data(augment_states=True, augment_e_descriptions=True)
+states_c, g_text_c, e_text_c, n_assumptions_c, a_vectors_c = \
     DataHandler.extract_domain_data(domain='chicken', augment_states=True, augment_e_descriptions=True)
+states = np.concatenate([states, states_c])
+g_text = np.concatenate([g_text, g_text_c])
+e_text = np.concatenate([e_text, e_text_c])
+n_assumptions = np.concatenate([n_assumptions, n_assumptions_c])
+a_vectors = np.concatenate([a_vectors, a_vectors_c])
 
 # Calculate how many samples to use for training and validation (and, as a result, testing)
 n_samples = states.shape[0]

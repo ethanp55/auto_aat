@@ -7,7 +7,7 @@ from sklearn.manifold import TSNE
 from typing import List
 
 
-FILE_ADJ = 'forex'
+FILE_ADJ = 'stag_hare'
 
 
 def _plot_embeddings(labels: List[str], embeddings: np.array, agent_name: str, three_dimensions: bool = False) -> None:

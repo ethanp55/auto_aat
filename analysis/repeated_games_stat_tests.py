@@ -15,8 +15,8 @@ def _cohens_d(group1, group2):
     return mean_diff / pooled_std
 
 
-# for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']:
-for game_name in ['coordination_game']:
+for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']:
+# for game_name in ['coordination_game']:
     print('-----------------------------------------------------------------------------------------------------------')
     print(f'-------------------------------------- {game_name} --------------------------------------------')
     print('-----------------------------------------------------------------------------------------------------------')

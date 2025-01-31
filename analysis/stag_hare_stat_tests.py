@@ -41,9 +41,9 @@ df = pd.DataFrame(
     }
 )
 # df.to_csv('../simulations/formatted_results_hand_picked_stag_hare.csv', index=False)
-
+df['algorithm'] = df['algorithm'].replace({'SMAlegAATr': 'SMAlegAAATr'})
 average_rewards_by_alg = df.groupby('algorithm')['agent_final_reward'].agg(['mean', 'sem']).reset_index()
-order = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr']
+order = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAAATr']
 average_rewards_by_alg['algorithm'] = pd.Categorical(average_rewards_by_alg['algorithm'], categories=order,
                                                      ordered=True)
 average_rewards_by_alg = average_rewards_by_alg.sort_values('algorithm').reset_index(drop=True)

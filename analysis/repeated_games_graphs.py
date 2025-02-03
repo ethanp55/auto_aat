@@ -224,9 +224,10 @@ for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']
     plt.savefig(f'../analysis/{game_name}/agent_rewards_overall.png', bbox_inches='tight')
     plt.clf()
 
+    all_vals_df['Agent'] = all_vals_df['Agent'].replace({'SMAlegAATr': 'SMAlegAAATr'})
     average_rewards_by_alg = all_vals_df.groupby('Agent')['Rewards'].agg(
         ['mean', 'sem']).reset_index()
-    order = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAATr']
+    order = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAAATr']
     average_rewards_by_alg['Agent'] = pd.Categorical(average_rewards_by_alg['Agent'], categories=order, ordered=True)
     average_rewards_by_alg = average_rewards_by_alg.sort_values('Agent').reset_index(drop=True)
     plt.figure(figsize=(10, 3))

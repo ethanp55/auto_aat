@@ -169,7 +169,8 @@ def crunch_numbers() -> None:
                   f'profit std: {sd}, min: {profits_array.min()}, max: {profits_array.max()}')
 
             all_profs.append(profits_array)
-            names.append(strategy)
+            name = 'SMAlegAAATr' if strategy == 'SMAlegAATr' else strategy
+            names.append(name)
 
         avgs = [arry.mean() for arry in all_profs]
         standard_errors = [arry.std() / len(arry) ** 0.5 for arry in all_profs]

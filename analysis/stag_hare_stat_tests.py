@@ -49,7 +49,7 @@ average_rewards_by_alg['algorithm'] = pd.Categorical(average_rewards_by_alg['alg
 average_rewards_by_alg = average_rewards_by_alg.sort_values('algorithm').reset_index(drop=True)
 plt.figure(figsize=(10, 3))
 plt.grid()
-bar_colors = ['blue', 'green', 'red', 'orange']
+bar_colors = ['#a6611a', '#dfc27d', '#80cdc1', '#018571']
 plt.bar(average_rewards_by_alg['algorithm'], average_rewards_by_alg['mean'],
         yerr=average_rewards_by_alg['sem'], capsize=5, color=bar_colors)
 plt.xlabel('Agent', fontsize=16, fontweight='bold')
@@ -63,7 +63,7 @@ average_rewards_by_alg['algorithm'] = pd.Categorical(average_rewards_by_alg['alg
 average_rewards_by_alg = average_rewards_by_alg.sort_values('algorithm').reset_index(drop=True)
 plt.figure(figsize=(10, 3))
 plt.grid()
-bar_colors = ['blue', 'green', 'red', 'orange']
+bar_colors = ['#a6611a', '#dfc27d', '#80cdc1', '#018571']
 plt.bar(average_rewards_by_alg['algorithm'], average_rewards_by_alg['mean'],
         yerr=average_rewards_by_alg['sem'], capsize=5, color=bar_colors)
 plt.xlabel('Agent', fontsize=16, fontweight='bold')

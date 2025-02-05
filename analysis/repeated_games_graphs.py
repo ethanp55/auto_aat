@@ -232,7 +232,7 @@ for game_name in ['prisoners_dilemma_game', 'chicken_game', 'coordination_game']
     average_rewards_by_alg = average_rewards_by_alg.sort_values('Agent').reset_index(drop=True)
     plt.figure(figsize=(10, 3))
     plt.grid()
-    bar_colors = ['blue', 'green', 'red', 'orange']
+    bar_colors = ['#a6611a', '#dfc27d', '#80cdc1', '#018571']
     plt.bar(average_rewards_by_alg['Agent'], average_rewards_by_alg['mean'],
             yerr=average_rewards_by_alg['sem'], capsize=5, color=bar_colors)
     plt.xlabel('Agent', fontsize=16, fontweight='bold')

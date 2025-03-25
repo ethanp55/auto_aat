@@ -174,7 +174,7 @@ def crunch_numbers() -> None:
 
         avgs = [arry.mean() for arry in all_profs]
         standard_errors = [arry.std() / len(arry) ** 0.5 for arry in all_profs]
-        bar_colors = ['blue', 'green', 'red', 'orange']
+        bar_colors = ['#a6611a', '#dfc27d', '#80cdc1', '#018571']
         plt.figure(figsize=(10, 3))
         plt.grid()
         plt.bar(names, avgs, yerr=standard_errors, capsize=5, color=bar_colors)

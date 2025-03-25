@@ -30,7 +30,6 @@ for file in os.listdir(folder):
         final_rewards.append(agent_reward)
         final_reward_sums.append(sum(row))
 
-# Store in a csv file for analysis in Google Sheets (or MS Excel)
 df = pd.DataFrame(
     {
         'algorithm': names,
@@ -40,7 +39,6 @@ df = pd.DataFrame(
         'agent_final_reward': final_rewards,
     }
 )
-# df.to_csv('../simulations/formatted_results_hand_picked_stag_hare.csv', index=False)
 df['algorithm'] = df['algorithm'].replace({'SMAlegAATr': 'SMAlegAAATr'})
 average_rewards_by_alg = df.groupby('algorithm')['agent_final_reward'].agg(['mean', 'sem']).reset_index()
 order = ['AlegAATr', 'AlegAAATr', 'AlegAAATTr', 'SMAlegAAATr']
@@ -49,7 +47,7 @@ average_rewards_by_alg['algorithm'] = pd.Categorical(average_rewards_by_alg['alg
 average_rewards_by_alg = average_rewards_by_alg.sort_values('algorithm').reset_index(drop=True)
 plt.figure(figsize=(10, 3))
 plt.grid()
-bar_colors = ['blue', 'green', 'red', 'orange']
+bar_colors = ['#a6611a', '#dfc27d', '#80cdc1', '#018571']
 plt.bar(average_rewards_by_alg['algorithm'], average_rewards_by_alg['mean'],
         yerr=average_rewards_by_alg['sem'], capsize=5, color=bar_colors)
 plt.xlabel('Agent', fontsize=16, fontweight='bold')
@@ -63,7 +61,7 @@ average_rewards_by_alg['algorithm'] = pd.Categorical(average_rewards_by_alg['alg
 average_rewards_by_alg = average_rewards_by_alg.sort_values('algorithm').reset_index(drop=True)
 plt.figure(figsize=(10, 3))
 plt.grid()
-bar_colors = ['blue', 'green', 'red', 'orange']
+bar_colors = ['#a6611a', '#dfc27d', '#80cdc1', '#018571']
 plt.bar(average_rewards_by_alg['algorithm'], average_rewards_by_alg['mean'],
         yerr=average_rewards_by_alg['sem'], capsize=5, color=bar_colors)
 plt.xlabel('Agent', fontsize=16, fontweight='bold')

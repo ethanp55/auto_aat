@@ -240,4 +240,6 @@ def rg_scores(game_name: str) -> None:
 if __name__ == '__main__':
     # forex_scores()
     rg_scores('prisoners_dilemma')
-    # pursuit_scores()
+    rg_scores('chicken')
+    rg_scores('coordination')
+    pursuit_scores()
